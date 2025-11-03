@@ -31,7 +31,7 @@ private:
 	std::vector<std::string> columns;
 
 // constructor 
-	Dataset (string path, string data_type) : file_path(path), type(data_type) {
+	Dataset::Dataset (string path, string data_type) : file_path(path), type(data_type) {
 		// if the data_type is not "train", "test", or "val", throw an exception.
 		// using the string path, read the csv 
 	}

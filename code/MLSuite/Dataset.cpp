@@ -1,6 +1,17 @@
+#include "Dataset.h"
 #include <iostream>
-#include <vector>
-#include <string>
+
+// Use specific using declarations instead of `using namespace std;`
+using std::string;
+using std::vector;
+using std::cerr;
+using std::endl;
+
+// new using declarations for reading files
+using std::ifstream;
+using std::stringstream;
+
+
 
 /* NOTE: Dataset strategy: store a contiguous 1D vector in memory for fast access, separate metadata from the data. 
  * The Dataset class stores data in row-major order, where we unroll each row in the 1D vector.
@@ -21,35 +32,50 @@
  *
  * @return the Dataset object to access data from directly.
  * */
-class Dataset {
-// private variables 
-private: 
-	std::string file_path;
-	std::string type; 
-	
-	std::vector<float> data; // TODO: casting everything to a float
-	std::vector<std::string> columns;
-
-// constructor 
-	Dataset::Dataset (string path, string data_type) : file_path(path), type(data_type) {
-		// if the data_type is not "train", "test", or "val", throw an exception.
-		// using the string path, read the csv 
+Dataset::Dataset(string path, string data_type) : file_path(path), type(data_type) {
+    // if the data_type is not "train", "test", or "val", throw an exception.
+	if (data_type != "train" && data_type != "test" && data_type != "val") {
+		throw std::invalid_argument("Invalid dataset type, must be train, test or val:" + data_type);
 	}
 
-
-// public methods 
-public: 
-	std::vector<float> get_data() { // getter method for the data 
-		return data;
-	}
-
-	std::string get_path() { return file_path; }
-	std::string get_type() { return type; }
-
-	void read_csv(string path) {
-		return;
-
+    // using the string path, read the csv 
+	try {
+		read_csv(path);	
+	} catch (const std::runtime_error& e) {
+		cerr << "Error reading file: " << e.what() << endl; 
+	} catch (...) {
+		cerr << "Unknown error" << endl;
 	}
 }
 
+void Dataset::read_csv(string path) {
+
+
+}
+
+vector<float> Dataset::get_data() { // getter method for the data 
+    return data;
+}
+
+string Dataset::get_path() { // getter for file path 
+	return file_path;
+}
+
+string Dataset::get_type() { 
+	return type; 
+}
+
+
+void Dataset::set_data(vector<float> new_data, vector<string> new_cols) { // getter method for the data 
+	data = new_data;
+	columns = new_cols;
+}
+
+void Dataset::set_path(string new_path) { 
+	file_path = new_path;
+}
+
+void Dataset::set_type(string new_type) { 
+	type = new_type;	
+}
 

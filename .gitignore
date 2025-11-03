@@ -80,6 +80,8 @@ Thumbs.db
 *.vcxproj.filters
 *.sln.docstates
 
+code/build/*
+
 # Xcode (if applicable)
 build/
 *.pbxuser

@@ -19,6 +19,7 @@ Push all files before the deadline. This repo is private and only visible to you
 We used the Iris dataset and the Titanic Dataset from Kaggle to test our machine learning library. Python code was used for preprocessing, and can be found in 
 `data-preprocessing/data-files`. The `data-files` directory includes `regression` and `classification` datasets, which contains already preprocessed and split datasets for regressive and classification tasks respectively.
 
+The datasets were preprocessed using Numpy, Pandas and Scikit-learn in Python notebooks. The raw data, processed datasets and the code used to obtain the processed data are in `data-preprocessing`. Please refer to the [Readme](data-preprocessing/README.md) for more details.
 
 # Classes API definition
 

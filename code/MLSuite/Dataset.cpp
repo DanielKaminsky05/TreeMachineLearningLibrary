@@ -1,5 +1,6 @@
 #include "Dataset.h"
 #include <iostream>
+#include <stdexcept>
 
 // Use specific using declarations instead of `using namespace std;`
 using std::string;
@@ -7,10 +8,9 @@ using std::vector;
 using std::cerr;
 using std::endl;
 
-// new using declarations for reading files
+// using declarations for reading files
 using std::ifstream;
 using std::stringstream;
-
 
 
 /* NOTE: Dataset strategy: store a contiguous 1D vector in memory for fast access, separate metadata from the data. 
@@ -33,12 +33,12 @@ using std::stringstream;
  * @return the Dataset object to access data from directly.
  * */
 Dataset::Dataset(string path, string data_type) : file_path(path), type(data_type) {
-    // if the data_type is not "train", "test", or "val", throw an exception.
+    	// if the data_type is not "train", "test", or "val", throw an exception.
 	if (data_type != "train" && data_type != "test" && data_type != "val") {
 		throw std::invalid_argument("Invalid dataset type, must be train, test or val:" + data_type);
 	}
 
-    // using the string path, read the csv 
+    	// using the string path, read the csv 
 	try {
 		read_csv(path);	
 	} catch (const std::runtime_error& e) {
@@ -49,8 +49,40 @@ Dataset::Dataset(string path, string data_type) : file_path(path), type(data_typ
 }
 
 void Dataset::read_csv(string path) {
+    // open file, throw exception if it is not
+    ifstream file(path);
 
+    if (!file.is_open()) {
+        throw std::runtime_error("Error: file not found at " + path);
+    }
 
+    // Clear existing data
+    columns.clear();
+    data.clear();
+
+    // get the first line, which is the columns.
+    string col_line;
+    if (getline(file, col_line)) {
+        stringstream ss(col_line);
+        string cell;
+        while (getline(ss, cell, ',')) {
+            columns.push_back(cell);
+        }
+    }
+
+    // get the values and put them into the data 1D vector.
+    string line;
+    while (getline(file, line)) {
+        stringstream ss(line);
+        string cell;
+        while (getline(ss, cell, ',')) {
+            try {
+                data.push_back(std::stof(cell));
+            } catch (const std::invalid_argument& e) {
+                cerr << "Could not convert string to float: " << cell << endl;
+            }
+        }
+    }
 }
 
 vector<float> Dataset::get_data() { // getter method for the data 

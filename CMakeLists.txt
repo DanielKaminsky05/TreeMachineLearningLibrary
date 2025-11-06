@@ -6,4 +6,5 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(assignment2
     main.cpp
+    code/MLSuite/Dataset.cpp
 )

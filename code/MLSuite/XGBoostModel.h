@@ -13,8 +13,8 @@ private:
     std::string loss_fn;           // "reg:squarederror" or "binary:logistic"
     int depth;
     float subsample_ratio;
-    float gamma;                   // (kept for API completeness; not used by this simple DT)
-    std::string regularization;    // (kept for API completeness; not used by this simple DT)
+    float gamma;                 
+    std::string regularization;  
 
     // Model state
     std::vector<DecisionTree> trees;
@@ -27,11 +27,12 @@ private:
     static double clipped(double x, double lo, double hi);
 
 public:
-    // Constructor (declared only; implemented in .cpp)
+
+    //Constructor
     XGBoostModel(int n_est_counts, float learning_rate, std::string loss_fn,
                  int depth, float subsample_ratio, float gamma, std::string regularization);
 
-    // Core API
+
     double predict(const std::vector<double> input);
     void fit(const std::vector<std::vector<double>>& X, const std::vector<double>& Y);
 
@@ -51,7 +52,7 @@ public:
     float get_gamma() const { return gamma; }
     std::string get_regularization() const { return regularization; }
 
-    // Optional: access to internals
+   
     bool fitted() const { return is_fitted; }
     double bias() const { return init_bias; }
 };

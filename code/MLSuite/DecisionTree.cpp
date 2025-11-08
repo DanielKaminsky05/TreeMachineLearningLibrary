@@ -215,7 +215,7 @@ void DecisionTree::Fit(const std::vector<std::vector<double>>& X,
     isFitted = true;
 }
 
-double DecisionTree::predict(const std::vector<double>& x) {
+double DecisionTree::predict(const std::vector<double>& x) const {
     if (!isFitted) {
         throw std::runtime_error("predict: model not fitted.");
     }

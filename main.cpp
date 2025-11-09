@@ -31,7 +31,7 @@ void perform_linear_regression() {
 int main() {
     perform_linear_regression(); // Run the Eigen test
     try {
-        Dataset iris_train("./data-preprocessing/data-files/classification/iris_dataset/iris_X_train_processed.csv", "train");
+        Dataset iris_train("../data-preprocessing/data-files/classification/iris_dataset/iris_X_train_processed.csv", "train");
         std::vector<float> data = iris_train.get_data();
         for(int i = 0; i < 10; ++i) {
             std::cout << data[i] << " ";

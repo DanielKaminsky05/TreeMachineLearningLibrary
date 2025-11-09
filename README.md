@@ -29,3 +29,8 @@ The dataset.cpp loads a CSV in contiguous memory as a single homogenous 1D vecto
 
 `read_csv`:
 `get_path`:
+
+### Usage: 
+
+in `main.cpp` in the project root, load a CSV file in `data-preprocessing` into a Dataset object using `../data-preprocessing/` as the file path, since all the 
+code is built inside `build/`.

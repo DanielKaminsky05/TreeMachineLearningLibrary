@@ -97,6 +97,11 @@ string Dataset::get_type() {
 	return type; 
 }
 
+vector<string> Dataset::get_columns() {
+    return columns;
+}
+
+
 
 void Dataset::set_data(vector<float> new_data, vector<string> new_cols) { // getter method for the data 
 	data = new_data;

@@ -12,7 +12,7 @@ int main() {
 
         // 2. Create and train the Linear Regression model
         LinRegModel model;
-        model.fit(X_train, y_train);
+        model.fit(X_train, y_train, "L2");
 
         // 3. Print the learned parameters (theta)
         std::cout << "Learned parameters (theta):" << std::endl;

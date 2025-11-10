@@ -21,6 +21,7 @@ public:
 	std::vector<float> get_data();
 	std::string get_path();
 	std::string get_type();
+	std::vector<std::string> get_columns();
 
 	// helper method for reading csv 
 	void read_csv(std::string path);

@@ -9,4 +9,5 @@ include_directories(3rdparty/eigen-5.0.0)
 add_executable(assignment2
     main.cpp
     code/MLSuite/Dataset.cpp
+    code/MLSuite/LinRegModel.cpp
 )

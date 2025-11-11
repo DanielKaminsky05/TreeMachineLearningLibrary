@@ -6,157 +6,102 @@
 #include <random>
 #include <stdexcept>
 
-// ---------- Helpers ----------
-double XGBoostModel::sigmoid(double z) {
-    // Numerically stable-ish sigmoid
-    if (z >= 0) {
-        double e = std::exp(-z);
-        return 1.0 / (1.0 + e);
-    } else {
-        double e = std::exp(z);
-        return e / (1.0 + e);
+XGBoostModel::XGBoostModel(int nEstimatorsValue,
+                           float learningRateValue,
+                           int maxDepthValue,
+                           float subsampleRatioValue,
+                           float gammaValue,
+                           std::string regularizationValue)
+    : nEstimators(nEstimatorsValue),
+      learningRate(learningRateValue),
+      maxDepth(maxDepthValue),
+      subsampleRatio(subsampleRatioValue),
+      gamma(gammaValue),
+      regularization(std::move(regularizationValue)) {
+    if (subsampleRatio <= 0.0f || subsampleRatio > 1.0f) {
+        throw std::invalid_argument("subsampleRatio must be in (0, 1].");
+    }
+    if (nEstimators <= 0) {
+        throw std::invalid_argument("nEstimators must be > 0.");
+    }
+    if (maxDepth <= 0) {
+        throw std::invalid_argument("maxDepth must be > 0.");
+    }
+    if (learningRate <= 0.0f) {
+        throw std::invalid_argument("learningRate must be > 0.");
     }
 }
 
-double XGBoostModel::logit(double p) {
-    // clip to avoid infinities
-    double pc = clipped(p, 1e-12, 1.0 - 1e-12);
-    return std::log(pc / (1.0 - pc));
-}
-
-double XGBoostModel::clipped(double x, double lo, double hi) {
-    return std::max(lo, std::min(hi, x));
-}
-
-// ---------- Constructor ----------
-XGBoostModel::XGBoostModel(int n_est_counts, float learning_rate, std::string loss_fn,
-                           int depth, float subsample_ratio, float gamma, std::string regularization)
-    : n_est_counts(n_est_counts),
-    learning_rate(learning_rate),
-    loss_fn(std::move(loss_fn)),
-    depth(depth),
-    subsample_ratio(subsample_ratio),
-    gamma(gamma),
-    regularization(std::move(regularization)) {
-    if (this->subsample_ratio <= 0.0f || this->subsample_ratio > 1.0f) {
-        throw std::invalid_argument("subsample_ratio must be in (0, 1].");
-    }
-    if (this->n_est_counts <= 0) {
-        throw std::invalid_argument("n_est_counts must be > 0.");
-    }
-    if (this->depth <= 0) {
-        throw std::invalid_argument("depth must be > 0.");
-    }
-    if (this->learning_rate <= 0.0f) {
-        throw std::invalid_argument("learning_rate must be > 0.");
-    }
-}
-
-// ---------- fit ----------
 void XGBoostModel::fit(const std::vector<std::vector<double>>& X,
                        const std::vector<double>& Y) {
-    const size_t n = Y.size();
-    if (n == 0 || X.size() == 0 || X.size() != n) {
-        throw std::invalid_argument("X and Y must be non-empty and have the same number of rows.");
+    const size_t sampleCount = Y.size();
+    if (sampleCount == 0 || X.empty() || X.size() != sampleCount) {
+        throw std::invalid_argument("X and Y must be non-empty and have matching rows.");
     }
-    if (X[0].size() == 0) {
-        throw std::invalid_argument("X must have at least one feature.");
+    if (X[0].empty()) {
+        throw std::invalid_argument("X must contain at least one feature.");
     }
 
     trees.clear();
-    trees.reserve(static_cast<size_t>(n_est_counts));
+    trees.reserve(static_cast<size_t>(nEstimators));
 
-    // Initialize predictions depending on loss
-    std::vector<double> y_pred(n, 0.0);
+    double meanTarget = std::accumulate(Y.begin(), Y.end(), 0.0) / static_cast<double>(sampleCount);
+    initialBias = meanTarget;
 
-    if (loss_fn == "binary:logistic") {
-        // Bias is logit of positive rate
-        double pos_rate = std::accumulate(Y.begin(), Y.end(), 0.0) / static_cast<double>(n);
-        init_bias = logit(pos_rate);
-        std::fill(y_pred.begin(), y_pred.end(), init_bias); // raw scores (log-odds)
-    } else {
-        // Default: reg:squarederror
-        double mean = std::accumulate(Y.begin(), Y.end(), 0.0) / static_cast<double>(n);
-        init_bias = mean;
-        std::fill(y_pred.begin(), y_pred.end(), init_bias);
-    }
+    std::vector<double> predictions(sampleCount, initialBias);
+    std::vector<double> residuals(sampleCount);
 
-    // PRNG for subsampling
-    std::mt19937 rng(42); // fixed seed for reproducibility; you can expose/set this
+    std::mt19937 rng(42);
 
-    for (int m = 0; m < n_est_counts; ++m) {
-        // Compute pseudo-residuals
-        std::vector<double> residuals(n);
-
-        if (loss_fn == "binary:logistic") {
-            // Gradient of logistic loss wrt raw score f(x): grad = sigmoid(f) - y
-            for (size_t i = 0; i < n; ++i) {
-                double p = sigmoid(y_pred[i]);
-                double grad = (p - Y[i]);     // grad
-                residuals[i] = -grad;         // fit tree to negative gradient
-            }
-        } else {
-            // reg:squarederror: grad = (y_pred - y); residual = y - y_pred
-            for (size_t i = 0; i < n; ++i) {
-                residuals[i] = (Y[i] - y_pred[i]);
-            }
+    for (int treeIndex = 0; treeIndex < nEstimators; ++treeIndex) {
+        for (size_t i = 0; i < sampleCount; ++i) {
+            residuals[i] = Y[i] - predictions[i];
         }
 
-        // Row subsampling (without replacement)
-        std::vector<size_t> idx(n);
-        std::iota(idx.begin(), idx.end(), 0);
-        std::shuffle(idx.begin(), idx.end(), rng);
+        std::vector<size_t> indices(sampleCount);
+        std::iota(indices.begin(), indices.end(), 0);
+        std::shuffle(indices.begin(), indices.end(), rng);
 
-        size_t k = static_cast<size_t>(std::ceil(subsample_ratio * static_cast<float>(n)));
-        k = std::max<size_t>(1, std::min(k, n));
+        size_t subsampleSize = static_cast<size_t>(std::ceil(subsampleRatio * static_cast<float>(sampleCount)));
+        subsampleSize = std::max<size_t>(1, std::min(subsampleSize, sampleCount));
 
-        std::vector<std::vector<double>> X_sub;
-        std::vector<double> r_sub;
-        X_sub.reserve(k);
-        r_sub.reserve(k);
-        for (size_t i = 0; i < k; ++i) {
-            size_t j = idx[i];
-            X_sub.push_back(X[j]);
-            r_sub.push_back(residuals[j]);
+        std::vector<std::vector<double>> featureSubset;
+        std::vector<double> residualSubset;
+        featureSubset.reserve(subsampleSize);
+        residualSubset.reserve(subsampleSize);
+
+        for (size_t i = 0; i < subsampleSize; ++i) {
+            size_t rowIndex = indices[i];
+            featureSubset.push_back(X[rowIndex]);
+            residualSubset.push_back(residuals[rowIndex]);
         }
 
-        // Train a shallow tree on residuals
-        DecisionTree tree(depth /*maxDepth*/);
-        tree.Fit(X_sub, r_sub);
-
-        // Save it
+        DecisionTree tree(maxDepth);
+        tree.fit(featureSubset, residualSubset);
         trees.push_back(std::move(tree));
 
-        // Update predictions on full data
-        for (size_t i = 0; i < n; ++i) {
-            double tpred = trees.back().predict(X[i]);
-            y_pred[i] += static_cast<double>(learning_rate) * tpred;
+        for (size_t i = 0; i < sampleCount; ++i) {
+            double treePrediction = trees.back().predict(X[i]);
+            predictions[i] += static_cast<double>(learningRate) * treePrediction;
         }
     }
 
-    is_fitted = true;
+    isFitted = true;
 }
 
-// ---------- predict ----------
 double XGBoostModel::predict(const std::vector<double>& input) const {
-    if (!is_fitted) {
+    if (!isFitted) {
         throw std::runtime_error("Model not fitted. Call fit() first.");
     }
 
-    double score = init_bias;
-    for (const auto& t : trees) {
-        score += static_cast<double>(learning_rate) * t.predict(input);
+    double score = initialBias;
+    for (const auto& tree : trees) {
+        score += static_cast<double>(learningRate) * tree.predict(input);
     }
 
-    if (loss_fn == "binary:logistic") {
-        // Return probability by default
-        return sigmoid(score);
-    }
-    // Regression: return raw prediction
     return score;
 }
 
-// ---------- IModel Interface ----------
 void XGBoostModel::fit(const std::vector<float>& x_values,
                        const std::vector<std::string>& columns,
                        const std::vector<float>& y_values) {
@@ -167,52 +112,52 @@ void XGBoostModel::fit(const std::vector<float>& x_values,
         throw std::invalid_argument("Feature and target vectors must be non-empty.");
     }
 
-    const size_t n_cols = columns.size();
-    if (x_values.size() % n_cols != 0) {
+    const size_t columnCount = columns.size();
+    if (x_values.size() % columnCount != 0) {
         throw std::invalid_argument("Feature vector size must be a multiple of the number of columns.");
     }
 
-    const size_t n_rows = x_values.size() / n_cols;
-    if (n_rows != y_values.size()) {
+    const size_t rowCount = x_values.size() / columnCount;
+    if (rowCount != y_values.size()) {
         throw std::invalid_argument("Feature rows must match target size.");
     }
 
-    std::vector<std::vector<double>> X(n_rows, std::vector<double>(n_cols));
-    for (size_t i = 0; i < n_rows; ++i) {
-        for (size_t j = 0; j < n_cols; ++j) {
-            X[i][j] = static_cast<double>(x_values[i * n_cols + j]);
+    std::vector<std::vector<double>> features(rowCount, std::vector<double>(columnCount));
+    for (size_t i = 0; i < rowCount; ++i) {
+        for (size_t j = 0; j < columnCount; ++j) {
+            features[i][j] = static_cast<double>(x_values[i * columnCount + j]);
         }
     }
 
-    std::vector<double> Y(y_values.begin(), y_values.end());
-    fit(X, Y);
+    std::vector<double> targets(y_values.begin(), y_values.end());
+    fit(features, targets);
 }
 
 std::vector<float> XGBoostModel::predict(const std::vector<float>& x_values,
                                          const std::vector<std::string>& columns) const {
-    if (!is_fitted) {
+    if (!isFitted) {
         throw std::runtime_error("Model not fitted. Call fit() before predict().");
     }
     if (x_values.empty() || columns.empty()) {
         return {};
     }
 
-    const size_t n_cols = columns.size();
-    if (x_values.size() % n_cols != 0) {
+    const size_t columnCount = columns.size();
+    if (x_values.size() % columnCount != 0) {
         throw std::invalid_argument("Feature vector size must be a multiple of the number of columns.");
     }
 
-    const size_t n_rows = x_values.size() / n_cols;
-    std::vector<float> preds;
-    preds.reserve(n_rows);
+    const size_t rowCount = x_values.size() / columnCount;
+    std::vector<float> predictions;
+    predictions.reserve(rowCount);
 
-    for (size_t i = 0; i < n_rows; ++i) {
-        std::vector<double> sample(n_cols);
-        for (size_t j = 0; j < n_cols; ++j) {
-            sample[j] = static_cast<double>(x_values[i * n_cols + j]);
+    for (size_t i = 0; i < rowCount; ++i) {
+        std::vector<double> sample(columnCount);
+        for (size_t j = 0; j < columnCount; ++j) {
+            sample[j] = static_cast<double>(x_values[i * columnCount + j]);
         }
-        preds.push_back(static_cast<float>(this->predict(sample)));
+        predictions.push_back(static_cast<float>(predict(sample)));
     }
 
-    return preds;
+    return predictions;
 }

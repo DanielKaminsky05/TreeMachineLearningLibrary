@@ -1,17 +1,29 @@
 #include "XGBoostBuilder.h"
 
-XGBoostBuilder::XGBoostBuilder(int nEstCounts, float learningRate, const std::string& lossFn,
-                               int depthValue, float ratioValue, float gammaValue,
+XGBoostBuilder::XGBoostBuilder(int nEstimatorsValue,
+                               float learningRateValue,
+                               int maxDepthValue,
+                               float subsampleRatioValue,
+                               float gammaValue,
                                const std::string& regularizationType)
-    : n_est_counts(nEstCounts),
-      learning_rate(learningRate),
-      loss_fn(lossFn),
-      depth(depthValue),
-      ratio(ratioValue),
+    : nEstimators(nEstimatorsValue),
+      learningRate(learningRateValue),
+      maxDepth(maxDepthValue),
+      subsampleRatio(subsampleRatioValue),
       gamma(gammaValue),
       regularization(regularizationType),
-      model(nEstCounts, learningRate, lossFn, depthValue, ratioValue, gammaValue, regularizationType) {}
+      model(nEstimatorsValue,
+            learningRateValue,
+            maxDepthValue,
+            subsampleRatioValue,
+            gammaValue,
+            regularizationType) {}
 
-void XGBoostBuilder::set_model() {
-    model = XGBoostModel(n_est_counts, learning_rate, loss_fn, depth, ratio, gamma, regularization);
+void XGBoostBuilder::setModel() {
+    model = XGBoostModel(nEstimators,
+                         learningRate,
+                         maxDepth,
+                         subsampleRatio,
+                         gamma,
+                         regularization);
 }

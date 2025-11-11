@@ -24,7 +24,7 @@ int main() {
 
         // 3. Benchmark Linear Regression
         {
-            std::cout << "\n--- Benchmarking Random Forest ---" << std::endl;
+            std::cout << "\n--- Benchmarking Linear Regression ---" << std::endl;
             // Create the model via the factory. It returns a std::unique_ptr<IModel>.
             std::unique_ptr<IModel> model = factory.createLinRegModel();
 
@@ -46,6 +46,25 @@ int main() {
             std::cout << "\n--- Benchmarking Random Forest ---" << std::endl;
             // Create a different model from the same factory
             std::unique_ptr<IModel> model = factory.createRandomForestModel(50, 10, 2); // nEstimators, maxDepth, minSamplesSplit
+
+            // Fit the model
+            model->fit(x_train.get_data(), x_train.get_columns(), y_train.get_data());
+
+            // Execute the benchmark. The benchmark works with any IModel.
+            benchmark.execute(*model, x_test, y_test);
+
+		std::vector<float> results = model->predict(x_test.get_data(), x_test.get_columns());
+ 		for (int i = 0; i < 10; i++) {
+			std::cout << results[i] << std::endl;
+
+		}           
+        }
+
+        // 5. Benchmark XGBoost
+        {
+            std::cout << "\n--- Benchmarking XGBoost ---" << std::endl;
+            // Create a different model from the same factory
+            std::unique_ptr<IModel> model = factory.createXGBoostModel(50, 0.1f, 10, 0.8f, 0.1f, "L2");
 
             // Fit the model
             model->fit(x_train.get_data(), x_train.get_columns(), y_train.get_data());

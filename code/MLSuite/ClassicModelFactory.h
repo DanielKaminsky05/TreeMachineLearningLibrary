@@ -7,11 +7,11 @@
 
 class ClassicModelFactory {
 public:
-    // Creates a Linear Regression model
-    std::unique_ptr<IModel> createLinRegModel();
+    	// Creates a Linear Regression model
+    	std::unique_ptr<IModel> createLinRegModel();
 
-    // Creates a Random Forest model with specified hyperparameters
-    std::unique_ptr<IModel> createRandomForestModel(int nEstimators = 100, int maxDepth = 10, int minSamplesSplit = 2);
+	// instantiate and fit a random forest model with default params
+	std::unique_ptr<IModel> createRandomForestModel(int nEstimators = 100, int maxDepth = 10, int minSamplesSplit = 2);
 };
 
 #endif // CLASSICMODELFACTORY_H

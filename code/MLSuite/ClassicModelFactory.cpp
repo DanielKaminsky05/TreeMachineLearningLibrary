@@ -1,6 +1,6 @@
 #include "ClassicModelFactory.h"
-#include "LinRegModel.h"
-#include "RandomForest.h"
+// #include "LinRegModel.h"
+#include "RandomForestBuilder.h"
 #include "LinearRegressionBuilder.h" // Include the builder header
 #include <Eigen/Dense> // Keep if still needed by other parts of the factory
 
@@ -9,8 +9,15 @@ std::unique_ptr<IModel> ClassicModelFactory::createLinRegModel() {
     return LinearRegressionBuilder().build_unfitted();
 }
 
+// you cannot return a random forest that is unfitted, so it will build and fit the model in one go.
 std::unique_ptr<IModel> ClassicModelFactory::createRandomForestModel(int nEstimators, int maxDepth, int minSamplesSplit) {
-    // Using default values for the last 3 parameters of the RandomForest constructor:
-    // (maxFeatures=0, bootstrap=true, randomState=0)
-    return std::make_unique<RandomForest>(nEstimators, maxDepth, minSamplesSplit, 0, true, 0);
+    return RandomForestBuilder()
+        .setEstimators(nEstimators)
+        .setMaxDepth(maxDepth)
+        .setMinSamplesSplit(minSamplesSplit)
+        .setMaxFeatures(0) 
+        .setBootstrap(true)
+	.setRandomState(0)
+        .build();
 }
+

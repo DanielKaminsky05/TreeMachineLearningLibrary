@@ -12,6 +12,7 @@ add_executable(assignment2
     	code/MLSuite/LinRegModel.cpp
 	code/MLSuite/LinearRegressionBuilder.cpp
 	code/MLSuite/RandomForest.cpp
+	code/MLSuite/RandomForestBuilder.cpp
 	code/MLSuite/DecisionTree.cpp
 	code/MLSuite/RegressionBenchmark.cpp
 	code/MLSuite/BenchmarkStrategy.cpp

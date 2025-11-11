@@ -107,9 +107,6 @@ void RandomForest::buildTree(const std::vector<std::vector<double>>& X,
         Yb.push_back(Y[static_cast<std::size_t>(idx)]);
     }
 
-    // (Optional) if your DecisionTree later supports randomness, you can draw a seed:
-    // unsigned int seed = internalRng();
-
     // Construct a DecisionTree with your API and train it
     DecisionTree tree(maxDepth, minSamplesSplit);
     tree.fit(Xb, Yb);                    // <-- matches your DecisionTree

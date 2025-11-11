@@ -24,7 +24,7 @@ int main() {
 
         // 3. Benchmark Linear Regression
         {
-            std::cout << "\n--- Benchmarking Linear Regression ---" << std::endl;
+            std::cout << "\n--- Benchmarking Random Forest ---" << std::endl;
             // Create the model via the factory. It returns a std::unique_ptr<IModel>.
             std::unique_ptr<IModel> model = factory.createLinRegModel();
 

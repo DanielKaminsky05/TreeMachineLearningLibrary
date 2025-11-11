@@ -11,10 +11,12 @@ public:
     virtual ~IModel() = default;
 
     // Method for fitting the model to training data
-    virtual void fit(const std::vector<std::vector<float>>& features,
-                     const std::vector<float>& targets) = 0;
+    virtual void fit(const std::vector<float>& x_values,
+                     const std::vector<std::string>& columns,
+                     const std::vector<float>& y_values) = 0;
 
-    virtual std::vector<float> predict(const std::vector<std::vector<float>>& features) const = 0; // return predictions
+    virtual std::vector<float> predict(const std::vector<float>& x_values,
+                                       const std::vector<std::string>& columns) const = 0; // return predictions
 
     // Method to get the name of the model (used by benchmark)
     virtual std::string getName() const = 0;

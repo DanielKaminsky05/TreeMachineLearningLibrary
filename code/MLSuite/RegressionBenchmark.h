@@ -1,11 +1,11 @@
 #ifndef REGRESSIONBENCHMARK_H
 #define REGRESSIONBENCHMARK_H
 
-#include "IBenchmarkStrategy.h"
+#include "BenchmarkStrategy.h"
 
-class RegressionBenchmark : public IBenchmarkStrategy {
+class RegressionBenchmark : public BenchmarkStrategy {
 public:
-    void execute(const IModel& model, const Dataset& testData) const override;
+    void execute(const IModel& model, const Dataset& testFeatures, const Dataset& testTargets) const override;
 };
 
 #endif // REGRESSIONBENCHMARK_H

@@ -16,8 +16,8 @@ class RandomForest : public IModel {
         std::vector<DecisionTree> getTrees() {return trees;};
 
 	// Corrected IModel interface methods
-	void fit(const std::vector<std::vector<float>>& features, const std::vector<float>& targets) override;
-	std::vector<float> predict(const std::vector<std::vector<float>>& features) const override;
+	void fit(const std::vector<float>& x_values, const std::vector<std::string>& columns, const std::vector<float>& y_values) override;
+	std::vector<float> predict(const std::vector<float>& x_values, const std::vector<std::string>& columns) const override;
 	std::string getName() const override;
     private:
         int nEstimators;

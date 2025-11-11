@@ -28,10 +28,10 @@ public:
 	Dataset(const std::vector<std::vector<float>>& features, const std::vector<float>& targets);
 	
 	// getters 
-	std::vector<float> get_data();
-	std::string get_path();
-	std::string get_type();
-	std::vector<std::string> get_columns();
+	const std::vector<float>& get_data() const;
+	std::string get_path() const;
+	std::string get_type() const;
+	const std::vector<std::string>& get_columns() const;
 
 	// New getters for benchmark
 	const std::vector<std::vector<float>>& getFeatures() const;

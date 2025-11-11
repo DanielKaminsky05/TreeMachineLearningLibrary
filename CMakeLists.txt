@@ -15,5 +15,5 @@ add_executable(assignment2
 	code/MLSuite/DecisionTree.cpp
 	code/MLSuite/RegressionBenchmark.cpp
 	code/MLSuite/BenchmarkStrategy.cpp
-	code/MLSuite/ClassicModelfactory.cpp
+	code/MLSuite/ClassicModelFactory.cpp
 )

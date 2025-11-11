@@ -85,19 +85,19 @@ void Dataset::read_csv(string path) {
     }
 }
 
-vector<float> Dataset::get_data() { // getter method for the data 
+const vector<float>& Dataset::get_data() const { // getter method for the data 
     return data;
 }
 
-string Dataset::get_path() { // getter for file path 
+string Dataset::get_path() const { // getter for file path 
 	return file_path;
 }
 
-string Dataset::get_type() { 
+string Dataset::get_type() const { 
 	return type; 
 }
 
-vector<string> Dataset::get_columns() {
+const vector<string>& Dataset::get_columns() const {
     return columns;
 }
 

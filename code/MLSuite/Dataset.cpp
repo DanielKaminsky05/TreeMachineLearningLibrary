@@ -116,3 +116,28 @@ void Dataset::set_type(string new_type) {
 	type = new_type;	
 }
 
+// --- New Implementations for In-Memory Data ---
+
+Dataset::Dataset(const std::vector<std::vector<float>>& features, const std::vector<float>& targets)
+    : m_features(features), m_targets(targets) {
+    // This constructor is for in-memory data, so file_path and type can be empty.
+    this->type = "in-memory";
+}
+
+const std::vector<std::vector<float>>& Dataset::getFeatures() const {
+    // In a real application, you might want to add logic here to extract
+    // features from the 'data' vector if the object was constructed from a file.
+    // For this demo, we assume it was constructed with in-memory data.
+    if (m_features.empty() && !data.empty()) {
+        throw std::logic_error("getFeatures() is not supported for file-loaded datasets in this demo.");
+    }
+    return m_features;
+}
+
+const std::vector<float>& Dataset::getTargets() const {
+    // Similar to getFeatures, this is simplified for the demo.
+    if (m_targets.empty() && !data.empty()) {
+        throw std::logic_error("getTargets() is not supported for file-loaded datasets in this demo.");
+    }
+    return m_targets;
+}

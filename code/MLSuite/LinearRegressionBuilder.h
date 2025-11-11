@@ -5,6 +5,7 @@
 #include "Dataset.h"
 #include <string>
 #include <stdexcept>
+#include <memory> // For std::unique_ptr
 
 class LinearRegressionBuilder {
 public:
@@ -16,8 +17,11 @@ public:
     LinearRegressionBuilder& with_regularization(const std::string& type);
     LinearRegressionBuilder& with_lambda(double lambda);
 
-    // The final build/fit method that returns the trained model
+    // The original build/fit method that returns the trained model
     LinRegModel fit();
+
+    // New method to build an unfitted model
+    std::unique_ptr<LinRegModel> build_unfitted();
 
 private:
     // Private members to store the configuration

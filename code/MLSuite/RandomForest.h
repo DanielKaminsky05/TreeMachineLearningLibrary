@@ -1,12 +1,24 @@
 #ifndef RANDOMFOREST_H
 #define RANDOMFOREST_H
 
-
+#include "IModel.h"
 #include <vector>
 #include <random>
 #include "DecisionTree.h"
 
-class RandomForest {
+class RandomForest : public IModel {
+    public:
+	// TODO: check implementation for this class.
+        RandomForest(int Estimators, int maxDepth, int minSamplesSplit, int maxFeatures, bool bootstrap, int randomState);
+	// 100, -1, 2, 0, true, 0
+        void fit(const std::vector<std::vector<double>>& X, const std::vector<double>& Y);
+        double predict(const std::vector<double>& X);
+        std::vector<DecisionTree> getTrees() {return trees;};
+
+	// Corrected IModel interface methods
+	void fit(const std::vector<std::vector<float>>& features, const std::vector<float>& targets) override;
+	std::vector<float> predict(const std::vector<std::vector<float>>& features) const override;
+	std::string getName() const override;
     private:
         int nEstimators;
         int maxDepth;
@@ -23,14 +35,6 @@ class RandomForest {
         std::vector<int> sampleFeatures(int p, int maxFeatures);
         std::vector<std::vector<double>> predictAllTrees(const std::vector<std::vector<double>>& X);
         std::vector<double> aggregateMean(const std::vector<double>& preds);
-
-    public:
-        RandomForest(int Estimators = 100, int maxDepth = -1, int minSamplesSplit = 2, int maxFeatures = 0, bool bootstrap = true, int randomState = 0);
-        void fit(const std::vector<std::vector<double>>& X, const std::vector<double>& Y);
-        double predict(const std::vector<double>& X);
-        std::vector<DecisionTree> getTrees() {return trees;};
-
 };
-
 
 #endif

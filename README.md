@@ -23,6 +23,21 @@ The datasets were preprocessed using Numpy, Pandas and Scikit-learn in Python no
 
 # Classes API definition
 
+IModel.h connects models to BenchmarkStrategy (the common contract implemented as an interface), while builders build and return models that implement IModel.
+ie. LinearRegressionBuilder, the builder, builds and returns the concrete model. The conrete model implements IModel, then uses the Builder to get this concrete model, and returns it as an IModel.
+
+Strategy pattern: BenchmarkStrategy, RegressionBenchmark
+Polymorphism: IModel
+Factory & Builder patterns: factory & builder classes 
+
+
+## Usage 
+
+1. create the factory and the benchmark
+2. get a model from the factory (returns an IModel pointer)
+3. fit the model
+4. give the trained model to the benchmark to test `benchmark.execute(*model, test_dataset)`
+
 ## Dataset.cpp
 
 The dataset.cpp loads a CSV in contiguous memory as a single homogenous 1D vector array of floats.

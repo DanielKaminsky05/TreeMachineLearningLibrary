@@ -9,19 +9,33 @@
 
 class Dataset {
 private:
+	// For file-based data
 	std::string file_path;
 	std::string type;
 	std::vector<float> data;
 	std::vector<std::string> columns;
 
+	// For in-memory data
+	std::vector<std::vector<float>> m_features;
+	std::vector<float> m_targets;
+
+
 public: 
-	Dataset(std::string path, std::string data_type); // constructor 
+	// Original constructor for reading from a file
+	Dataset(std::string path, std::string data_type);
+
+	// New constructor for in-memory data
+	Dataset(const std::vector<std::vector<float>>& features, const std::vector<float>& targets);
 	
 	// getters 
 	std::vector<float> get_data();
 	std::string get_path();
 	std::string get_type();
 	std::vector<std::string> get_columns();
+
+	// New getters for benchmark
+	const std::vector<std::vector<float>>& getFeatures() const;
+	const std::vector<float>& getTargets() const;
 
 	// helper method for reading csv 
 	void read_csv(std::string path);

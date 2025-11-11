@@ -161,8 +161,7 @@ std::vector<std::vector<double>> RandomForest::predictAllTrees(
 
 std::vector<double> RandomForest::aggregateMean(const std::vector<double>& preds)
 {
-    // Your header returns vector<double>; we return {mean} to match it.
-    return { meanOf(preds) };
+    return { meanOf(preds) }; // return the mean of predictions 
 }
 
 double RandomForest::predict(const std::vector<double>& x)
@@ -180,4 +179,52 @@ double RandomForest::predict(const std::vector<double>& x)
         perTree.push_back(tree.predict(x));
     }
     return meanOf(perTree);
+}
+
+// model benchmarking interface concrete implementations for the strategy pattern.
+std::string RandomForest::getName() const {
+    return "Random Forest";
+}
+
+void RandomForest::fit(const std::vector<std::vector<float>>& features, const std::vector<float>& targets) {
+    // Convert float vectors to double vectors to match the original fit method's signature.
+    std::vector<std::vector<double>> features_double(features.size());
+    for (size_t i = 0; i < features.size(); ++i) {
+        features_double[i].assign(features[i].begin(), features[i].end());
+    }
+
+    std::vector<double> targets_double(targets.begin(), targets.end());
+
+    this->fit(features_double, targets_double); // fit using the same method as class definitions
+}
+
+// wraps around the original RandomForest::predict method, converts float to double
+// TODO: refactor the original methods for all the models, and adhere to an uniform data type for input params.
+std::vector<float> RandomForest::predict(const std::vector<std::vector<float>>& features) const {
+    if (!isFitted) {
+        throw std::logic_error("predict: model is not fitted");
+    }
+
+    std::vector<float> all_predictions;
+    all_predictions.reserve(features.size());
+
+    for (const auto& single_feature_float : features) {
+        if (static_cast<int>(single_feature_float.size()) != nFeatures) {
+            throw std::invalid_argument("predict: input dimension does not match training data");
+        }
+
+        // Convert float vector to double vector for the tree's predict method
+        std::vector<double> single_feature_double(single_feature_float.begin(), single_feature_float.end());
+
+        std::vector<double> per_tree_predictions; 
+        per_tree_predictions.reserve(trees.size());
+
+        for (const auto& tree : trees) { 
+            per_tree_predictions.push_back(tree.predict(single_feature_double));
+        }
+
+        all_predictions.push_back(static_cast<float>(meanOf(per_tree_predictions)));
+    }
+
+    return all_predictions;
 }

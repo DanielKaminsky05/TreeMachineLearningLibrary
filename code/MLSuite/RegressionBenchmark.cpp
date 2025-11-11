@@ -40,13 +40,11 @@ static double calculateR2(const std::vector<float>& actual, const std::vector<fl
 }
 
 
-void RegressionBenchmark::execute(const IModel& model, const Dataset& testData) const {
+void RegressionBenchmark::execute(const IModel& model, const Dataset& testFeatures, const Dataset& testTargets) const {
     std::cout << "\nExecuting regression benchmark..." << std::endl;
 
-    // Note: I am assuming your model and dataset classes have these methods.
-    // You may need to adjust these calls to match your actual class designs.
-    std::vector<float> predictions = model.predict(testData.getFeatures());
-    const std::vector<float>& actual = testData.getTargets();
+    std::vector<float> predictions = model.predict(testFeatures.get_data(), testFeatures.get_columns());
+    const std::vector<float>& actual = testTargets.get_data();
 
     if (predictions.size() != actual.size()) {
         std::cerr << "Benchmark Error: Prediction size does not match actual size." << std::endl;

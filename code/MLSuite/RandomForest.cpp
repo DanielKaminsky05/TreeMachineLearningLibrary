@@ -186,40 +186,68 @@ std::string RandomForest::getName() const {
     return "Random Forest";
 }
 
-void RandomForest::fit(const std::vector<std::vector<float>>& features, const std::vector<float>& targets) {
-    // Convert float vectors to double vectors to match the original fit method's signature.
-    std::vector<std::vector<double>> features_double(features.size());
-    for (size_t i = 0; i < features.size(); ++i) {
-        features_double[i].assign(features[i].begin(), features[i].end());
+void RandomForest::fit(const std::vector<float>& x_values, const std::vector<std::string>& columns, const std::vector<float>& y_values) {
+    if (x_values.empty() || y_values.empty() || columns.empty()) {
+        throw std::invalid_argument("Input vectors cannot be empty.");
     }
 
-    std::vector<double> targets_double(targets.begin(), targets.end());
+    size_t n_cols = columns.size();
+    size_t n_rows = x_values.size() / n_cols;
 
-    this->fit(features_double, targets_double); // fit using the same method as class definitions
+    if (x_values.size() % n_cols != 0) {
+        throw std::invalid_argument("The size of x_values is not a multiple of the number of columns.");
+    }
+    if (n_rows != y_values.size()) {
+        throw std::invalid_argument("Number of samples in features and targets do not match.");
+    }
+
+    // Reshape 1D vector to 2D vector and convert to double
+    std::vector<std::vector<double>> features_double(n_rows, std::vector<double>(n_cols));
+    for (size_t i = 0; i < n_rows; ++i) {
+        for (size_t j = 0; j < n_cols; ++j) {
+            features_double[i][j] = static_cast<double>(x_values[i * n_cols + j]);
+        }
+    }
+
+    std::vector<double> targets_double(y_values.begin(), y_values.end());
+
+    this->fit(features_double, targets_double);
 }
 
-// wraps around the original RandomForest::predict method, converts float to double
-// TODO: refactor the original methods for all the models, and adhere to an uniform data type for input params.
-std::vector<float> RandomForest::predict(const std::vector<std::vector<float>>& features) const {
+std::vector<float> RandomForest::predict(const std::vector<float>& x_values, const std::vector<std::string>& columns) const {
+    if (x_values.empty() || columns.empty()) {
+        return {};
+    }
     if (!isFitted) {
         throw std::logic_error("predict: model is not fitted");
     }
 
-    std::vector<float> all_predictions;
-    all_predictions.reserve(features.size());
+    size_t n_cols = columns.size();
+    size_t n_rows = x_values.size() / n_cols;
 
-    for (const auto& single_feature_float : features) {
-        if (static_cast<int>(single_feature_float.size()) != nFeatures) {
+    if (x_values.size() % n_cols != 0) {
+        throw std::invalid_argument("The size of x_values is not a multiple of the number of columns.");
+    }
+
+    std::vector<float> all_predictions;
+    all_predictions.reserve(n_rows);
+
+    for (size_t i = 0; i < n_rows; ++i) {
+        // Extract a single row and convert to double
+        std::vector<double> single_feature_double;
+        single_feature_double.reserve(n_cols);
+        for (size_t j = 0; j < n_cols; ++j) {
+            single_feature_double.push_back(static_cast<double>(x_values[i * n_cols + j]));
+        }
+
+        if (static_cast<int>(single_feature_double.size()) != nFeatures) {
             throw std::invalid_argument("predict: input dimension does not match training data");
         }
 
-        // Convert float vector to double vector for the tree's predict method
-        std::vector<double> single_feature_double(single_feature_float.begin(), single_feature_float.end());
-
-        std::vector<double> per_tree_predictions; 
+        std::vector<double> per_tree_predictions;
         per_tree_predictions.reserve(trees.size());
 
-        for (const auto& tree : trees) { 
+        for (const auto& tree : trees) {
             per_tree_predictions.push_back(tree.predict(single_feature_double));
         }
 

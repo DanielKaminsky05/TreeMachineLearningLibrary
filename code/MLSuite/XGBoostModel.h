@@ -6,66 +6,46 @@
 #include "DecisionTree.h"
 #include "IModel.h"
 
-
-
-
 class XGBoostModel : public IModel {
 private:
-    // Hyperparameters
-    int n_est_counts;
-    float learning_rate;
-    std::string loss_fn;           // "reg:squarederror" or "binary:logistic"
-    int depth;
-    float subsample_ratio;
-    float gamma;                 
-    std::string regularization;  
+    int nEstimators;
+    float learningRate;
+    int maxDepth;
+    float subsampleRatio;
+    float gamma;
+    std::string regularization;
 
-    // Model state
     std::vector<DecisionTree> trees;
-    double init_bias = 0.0;        // mean(y) for regression; logit(pos_rate) for logistic
-    bool is_fitted = false;
-
-    // Helpers
-    static double sigmoid(double z);
-    static double logit(double p);
-    static double clipped(double x, double lo, double hi);
+    double initialBias = 0.0;
+    bool isFitted = false;
 
 public:
-    
-    //Constructor
-    XGBoostModel(int n_est_counts, float learning_rate, std::string loss_fn,
-                 int depth, float subsample_ratio, float gamma, std::string regularization);
-
+    XGBoostModel(int nEstimators, float learningRate, int maxDepth,
+                 float subsampleRatio, float gamma, std::string regularization);
 
     double predict(const std::vector<double>& input) const;
     void fit(const std::vector<std::vector<double>>& X, const std::vector<double>& Y);
 
-    // ---- Setters ----
-    void set_n_estimators(int count) { n_est_counts = count; }
-    void set_learning_rate(float rate) { learning_rate = rate; }
-    void set_objective(const std::string& loss) { loss_fn = loss; }
-    void set_max_depth(int d) { depth = d; }
-    void set_subsample(float ratio) { subsample_ratio = ratio; }
+    void setNEstimators(int count) { nEstimators = count; }
+    void setLearningRate(float rate) { learningRate = rate; }
+    void setMaxDepth(int depthValue) { maxDepth = depthValue; }
+    void setSubsampleRatio(float ratio) { subsampleRatio = ratio; }
+    void setGamma(float gammaValue) { gamma = gammaValue; }
+    void setRegularization(const std::string& regularizationType) { regularization = regularizationType; }
 
-    // ---- Getters ----
-    int get_n_estimators() const { return n_est_counts; }
-    float get_learning_rate() const { return learning_rate; }
-    std::string get_loss_fn() const { return loss_fn; }
-    int get_depth() const { return depth; }
-    float get_ratio() const { return subsample_ratio; }
-    float get_gamma() const { return gamma; }
-    std::string get_regularization() const { return regularization; }
+    int getNEstimators() const { return nEstimators; }
+    float getLearningRate() const { return learningRate; }
+    int getDepth() const { return maxDepth; }
+    float getSubsampleRatio() const { return subsampleRatio; }
+    float getGamma() const { return gamma; }
+    std::string getRegularization() const { return regularization; }
 
-   
-    bool fitted() const { return is_fitted; }
-    double bias() const { return init_bias; }
+    bool fitted() const { return isFitted; }
+    double bias() const { return initialBias; }
 
-
-    //IModel Interface Implementation
     void fit(const std::vector<float>& x_values, const std::vector<std::string>& columns, const std::vector<float>& y_values) override;
     std::vector<float> predict(const std::vector<float>& x_values, const std::vector<std::string>& columns) const override;
-    std::string getName() const  {return "XGBoost";};
-
+    std::string getName() const override { return "XGBoost"; }
 };
 
 #endif

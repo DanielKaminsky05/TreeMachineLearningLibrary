@@ -6,55 +6,58 @@
 
 class XGBoostBuilder {
 private:
-    int n_est_counts;
-    float learning_rate;
-    std::string loss_fn;
-    int depth;
-    float ratio;
+    int nEstimators;
+    float learningRate;
+    int maxDepth;
+    float subsampleRatio;
     float gamma;
     std::string regularization;
     XGBoostModel model;
 
 public:
-    XGBoostBuilder(int nEstCounts, float learningRate, const std::string& lossFn,
-                   int depth, float ratio, float gamma, const std::string& regularization);
+    XGBoostBuilder(int nEstimators, float learningRate, int maxDepth,
+                   float subsampleRatio, float gamma, const std::string& regularization);
 
-    void set_n_estimators(int count) {
-        n_est_counts = count;
-        model.set_n_estimators(count);
+    void setNEstimators(int count) {
+        nEstimators = count;
+        model.setNEstimators(count);
     }
 
-    void set_learning_rate(float rate) {
-        learning_rate = rate;
-        model.set_learning_rate(rate);
+    void setLearningRate(float rate) {
+        learningRate = rate;
+        model.setLearningRate(rate);
     }
 
-    void set_objective(const std::string& lossFn) {
-        loss_fn = lossFn;
-        model.set_objective(lossFn);
+    void setMaxDepth(int depthValue) {
+        maxDepth = depthValue;
+        model.setMaxDepth(depthValue);
     }
 
-    void set_max_depth(int depthValue) {
-        depth = depthValue;
-        model.set_max_depth(depthValue);
+    void setSubsampleRatio(float ratioValue) {
+        subsampleRatio = ratioValue;
+        model.setSubsampleRatio(ratioValue);
     }
 
-    void set_subsample(float ratioValue) {
-        ratio = ratioValue;
-        model.set_subsample(ratioValue);
+    void setGamma(float gammaValue) {
+        gamma = gammaValue;
+        model.setGamma(gammaValue);
     }
 
-    int get_n_estimators() const { return n_est_counts; }
-    float get_learning_rate() const { return learning_rate; }
-    const std::string& get_loss_fn() const { return loss_fn; }
-    int get_depth() const { return depth; }
-    float get_ratio() const { return ratio; }
-    float get_gamma() const { return gamma; }
-    const std::string& get_regularization() const { return regularization; }
+    void setRegularization(const std::string& regularizationType) {
+        regularization = regularizationType;
+        model.setRegularization(regularizationType);
+    }
 
-    const XGBoostModel& get_model() const { return model; }
-    XGBoostModel& get_model() { return model; }
-    void set_model();
+    int getNEstimators() const { return nEstimators; }
+    float getLearningRate() const { return learningRate; }
+    int getDepth() const { return maxDepth; }
+    float getSubsampleRatio() const { return subsampleRatio; }
+    float getGamma() const { return gamma; }
+    const std::string& getRegularization() const { return regularization; }
+
+    const XGBoostModel& getModel() const { return model; }
+    XGBoostModel& getModel() { return model; }
+    void setModel();
 };
 
 #endif

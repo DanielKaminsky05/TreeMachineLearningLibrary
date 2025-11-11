@@ -193,7 +193,7 @@ void DecisionTree::buildTree(const std::vector<std::vector<double>>& X,
     buildTree(X, Y, Ridx, depth + 1, rch);
 }
 
-void DecisionTree::Fit(const std::vector<std::vector<double>>& X,
+void DecisionTree::fit(const std::vector<std::vector<double>>& X,
                        const std::vector<double>& Y) {
     if (X.empty() || Y.empty() || X.size() != Y.size()) {
         throw std::invalid_argument("Fit: X and Y must be non-empty and have the same number of rows.");

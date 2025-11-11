@@ -138,7 +138,7 @@ void XGBoostModel::fit(const std::vector<std::vector<double>>& X,
 }
 
 // ---------- predict ----------
-double XGBoostModel::predict(const std::vector<double> input) {
+double XGBoostModel::predict(const std::vector<double>& input) const {
     if (!is_fitted) {
         throw std::runtime_error("Model not fitted. Call fit() first.");
     }
@@ -154,4 +154,65 @@ double XGBoostModel::predict(const std::vector<double> input) {
     }
     // Regression: return raw prediction
     return score;
+}
+
+// ---------- IModel Interface ----------
+void XGBoostModel::fit(const std::vector<float>& x_values,
+                       const std::vector<std::string>& columns,
+                       const std::vector<float>& y_values) {
+    if (columns.empty()) {
+        throw std::invalid_argument("Columns must be provided for XGBoostModel::fit.");
+    }
+    if (x_values.empty() || y_values.empty()) {
+        throw std::invalid_argument("Feature and target vectors must be non-empty.");
+    }
+
+    const size_t n_cols = columns.size();
+    if (x_values.size() % n_cols != 0) {
+        throw std::invalid_argument("Feature vector size must be a multiple of the number of columns.");
+    }
+
+    const size_t n_rows = x_values.size() / n_cols;
+    if (n_rows != y_values.size()) {
+        throw std::invalid_argument("Feature rows must match target size.");
+    }
+
+    std::vector<std::vector<double>> X(n_rows, std::vector<double>(n_cols));
+    for (size_t i = 0; i < n_rows; ++i) {
+        for (size_t j = 0; j < n_cols; ++j) {
+            X[i][j] = static_cast<double>(x_values[i * n_cols + j]);
+        }
+    }
+
+    std::vector<double> Y(y_values.begin(), y_values.end());
+    fit(X, Y);
+}
+
+std::vector<float> XGBoostModel::predict(const std::vector<float>& x_values,
+                                         const std::vector<std::string>& columns) const {
+    if (!is_fitted) {
+        throw std::runtime_error("Model not fitted. Call fit() before predict().");
+    }
+    if (x_values.empty() || columns.empty()) {
+        return {};
+    }
+
+    const size_t n_cols = columns.size();
+    if (x_values.size() % n_cols != 0) {
+        throw std::invalid_argument("Feature vector size must be a multiple of the number of columns.");
+    }
+
+    const size_t n_rows = x_values.size() / n_cols;
+    std::vector<float> preds;
+    preds.reserve(n_rows);
+
+    for (size_t i = 0; i < n_rows; ++i) {
+        std::vector<double> sample(n_cols);
+        for (size_t j = 0; j < n_cols; ++j) {
+            sample[j] = static_cast<double>(x_values[i * n_cols + j]);
+        }
+        preds.push_back(static_cast<float>(this->predict(sample)));
+    }
+
+    return preds;
 }

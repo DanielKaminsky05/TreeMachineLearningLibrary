@@ -4,8 +4,12 @@
 #include <string>
 #include <vector>
 #include "DecisionTree.h"
+#include "IModel.h"
 
-class XGBoostModel {
+
+
+
+class XGBoostModel : public IModel {
 private:
     // Hyperparameters
     int n_est_counts;
@@ -27,13 +31,13 @@ private:
     static double clipped(double x, double lo, double hi);
 
 public:
-
+    
     //Constructor
     XGBoostModel(int n_est_counts, float learning_rate, std::string loss_fn,
                  int depth, float subsample_ratio, float gamma, std::string regularization);
 
 
-    double predict(const std::vector<double> input);
+    double predict(const std::vector<double>& input) const;
     void fit(const std::vector<std::vector<double>>& X, const std::vector<double>& Y);
 
     // ---- Setters ----
@@ -55,6 +59,13 @@ public:
    
     bool fitted() const { return is_fitted; }
     double bias() const { return init_bias; }
+
+
+    //IModel Interface Implementation
+    void fit(const std::vector<float>& x_values, const std::vector<std::string>& columns, const std::vector<float>& y_values) override;
+    std::vector<float> predict(const std::vector<float>& x_values, const std::vector<std::string>& columns) const override;
+    std::string getName() const  {return "XGBoost";};
+
 };
 
 #endif

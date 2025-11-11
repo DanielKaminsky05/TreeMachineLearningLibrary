@@ -17,4 +17,6 @@ add_executable(assignment2
 	code/MLSuite/RegressionBenchmark.cpp
 	code/MLSuite/BenchmarkStrategy.cpp
 	code/MLSuite/ClassicModelFactory.cpp
+	code/MLSuite/XGBoostModel.cpp
+	code/MLSuite/XGBoostBuilder.cpp
 )

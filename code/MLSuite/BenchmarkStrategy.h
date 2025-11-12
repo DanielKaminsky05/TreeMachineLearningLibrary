@@ -6,8 +6,8 @@
 
 class BenchmarkStrategy {
 public:
-	virtual ~BenchmarkStrategy() = default;
-    	virtual void execute(const IModel& model, const Dataset& testFeatures, const Dataset& testTargets) const = 0;
+    virtual ~BenchmarkStrategy() = default;
+    virtual void execute(const IModel& model, const Dataset& xData, const Dataset& yData) const = 0;
 };
 
-#endif 
+#endif

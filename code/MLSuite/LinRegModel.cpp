@@ -42,78 +42,80 @@ void LinRegModel::fit(Dataset& X_dataset, Dataset& y_dataset, const std::string&
 }
 
 Eigen::VectorXf LinRegModel::predict(const Eigen::Ref<const Eigen::MatrixXf>& X_test) {
-    Eigen::MatrixXf X_test_b(X_test.rows(), X_test.cols() + 1);
-    X_test_b.setOnes();
-    X_test_b.rightCols(X_test.cols()) = X_test;
+	Eigen::MatrixXf X_test_b(X_test.rows(), X_test.cols() + 1);
+    	X_test_b.setOnes();
+    	X_test_b.rightCols(X_test.cols()) = X_test;
 
-    return X_test_b * m_theta;
+    	return X_test_b * m_theta;
 }
 
 Eigen::VectorXf LinRegModel::get_theta() {
-    return m_theta;
+    	return m_theta;
 }
 
-// --- IModel Interface Implementation ---
-
+// concrete method implementations for the IModel interface for benchmark 
 void LinRegModel::fit(const std::vector<float>& x_values, const std::vector<std::string>& columns, const std::vector<float>& y_values) {
-    if (x_values.empty() || y_values.empty() || columns.empty()) {
-        throw std::invalid_argument("Input vectors cannot be empty.");
-    }
 
-    size_t n_cols = columns.size();
-    size_t n_rows = x_values.size() / n_cols;
+	if (x_values.empty() || y_values.empty() || columns.empty()) {
+        	throw std::invalid_argument("Input vectors cannot be empty.");
+    	}
 
-    if (x_values.size() % n_cols != 0) {
-        throw std::invalid_argument("The size of x_values is not a multiple of the number of columns.");
-    }
-    if (n_rows != y_values.size()) {
-        throw std::invalid_argument("Number of samples in features and targets do not match.");
-    }
+    	size_t n_cols = columns.size();
+    	size_t n_rows = x_values.size() / n_cols;
 
-    // Map the 1D float vector to an Eigen Matrix
-    Eigen::Map<const Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> X(x_values.data(), n_rows, n_cols);
+    	if (x_values.size() % n_cols != 0) {
+        	throw std::invalid_argument("The size of x_values is not a multiple of the number of columns.");
+    	}
+    	if (n_rows != y_values.size()) {
+    		throw std::invalid_argument("Number of samples in features and targets do not match.");
+    	}
 
-    // Map the target vector to an Eigen Vector
-    Eigen::Map<const Eigen::VectorXf> y(y_values.data(), n_rows);
+    	// map the 1D float vector to an Eigen Matrix
+    	Eigen::Map<const Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> X(x_values.data(), n_rows, n_cols);
 
-    // Add bias term and solve for theta (standard normal equation)
-    Eigen::MatrixXf X_b(n_rows, n_cols + 1);
-    X_b.setOnes();
-    X_b.rightCols(n_cols) = X;
-    m_theta = (X_b.transpose() * X_b).ldlt().solve(X_b.transpose() * y);
+    	// map the target vector to an Eigen Vector
+    	Eigen::Map<const Eigen::VectorXf> y(y_values.data(), n_rows);
+
+    	// Add bias term, solve theta for weights 
+    	Eigen::MatrixXf X_b(n_rows, n_cols + 1);
+    	X_b.setOnes();
+    	X_b.rightCols(n_cols) = X;
+    	m_theta = (X_b.transpose() * X_b).ldlt().solve(X_b.transpose() * y);
 }
 
 std::vector<float> LinRegModel::predict(const std::vector<float>& x_values, const std::vector<std::string>& columns) const {
-    if (x_values.empty() || columns.empty()) {
-        return {};
-    }
-    if (m_theta.size() == 0) {
-        throw std::logic_error("Model has not been fitted yet. Call fit() before predict().");
-    }
+	if (x_values.empty() || columns.empty()) {
+        	return {};
+    	}
 
-    size_t n_cols = columns.size();
-    size_t n_rows = x_values.size() / n_cols;
+    	if (m_theta.size() == 0) {
+        	throw std::logic_error("Model has not been fitted yet. Call fit() before predict().");
+    	}
 
-    if (x_values.size() % n_cols != 0) {
-        throw std::invalid_argument("The size of x_values is not a multiple of the number of columns.");
-    }
-    if (m_theta.size() != n_cols + 1) {
-         throw std::invalid_argument("Number of features in prediction data does not match the trained model.");
-    }
+    	size_t n_cols = columns.size();
+    	size_t n_rows = x_values.size() / n_cols;
 
-    // Map the 1D float vector to an Eigen Matrix
-    Eigen::Map<const Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> X_test(x_values.data(), n_rows, n_cols);
+    	if (x_values.size() % n_cols != 0) {
+        	throw std::invalid_argument("The size of x_values is not a multiple of the number of columns.");
+    	}
 
-    // Add bias term and predict
-    Eigen::MatrixXf X_test_b(X_test.rows(), X_test.cols() + 1);
-    X_test_b.setOnes();
-    X_test_b.rightCols(X_test.cols()) = X_test;
-    Eigen::VectorXf predictions_eigen = X_test_b * m_theta;
+    	if (m_theta.size() != n_cols + 1) {
+         	throw std::invalid_argument("Number of features in prediction data does not match the trained model.");
+    	}
 
-    // Convert Eigen::VectorXf back to std::vector<float>
-    return std::vector<float>(predictions_eigen.data(), predictions_eigen.data() + predictions_eigen.size());
+    	// map the 1D float vector to an Eigen Matrix
+    	Eigen::Map<const Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> X_test(x_values.data(), n_rows, n_cols);
+
+    	// Add bias term and predict
+    	Eigen::MatrixXf X_test_b(X_test.rows(), X_test.cols() + 1);
+    	X_test_b.setOnes();
+    	X_test_b.rightCols(X_test.cols()) = X_test;
+    	Eigen::VectorXf predictions_eigen = X_test_b * m_theta;
+
+    	// Convert Eigen::VectorXf back to std::vector<float>
+    	return std::vector<float>(predictions_eigen.data(), predictions_eigen.data() + predictions_eigen.size());
 }
 
 std::string LinRegModel::getName() const {
-    return "Linear Regression";
+	return "Linear Regression";
 }

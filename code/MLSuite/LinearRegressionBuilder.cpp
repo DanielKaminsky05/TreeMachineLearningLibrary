@@ -40,5 +40,5 @@ LinRegModel LinearRegressionBuilder::fit() {
 
 // New method to build an unfitted model
 std::unique_ptr<LinRegModel> LinearRegressionBuilder::build_unfitted() {
-    return std::make_unique<LinRegModel>();
+    	return std::make_unique<LinRegModel>();
 }

@@ -2,7 +2,7 @@
 #include <iostream>
 #include <stdexcept>
 
-// Use specific using declarations instead of `using namespace std;`
+// Use specific using declarations instead of `using namespace std;
 using std::string;
 using std::vector;
 using std::cerr;
@@ -23,15 +23,6 @@ using std::stringstream;
  * For better open source integration, we can re-implement the data loading logic in the future with dataframe libaries and custom definitions.
  * */
 
-/**
- *
- * @brief the Dataset class for loading the already processed datasets as a homogeneous float 1D vector and a column vector in memory.
- *
- * @param path 
- * @param data_type
- *
- * @return the Dataset object to access data from directly.
- * */
 Dataset::Dataset(string path, string data_type) : file_path(path), type(data_type) {
     	// if the data_type is not "train", "test", or "val", throw an exception.
 	if (data_type != "train" && data_type != "test" && data_type != "val") {
@@ -49,44 +40,46 @@ Dataset::Dataset(string path, string data_type) : file_path(path), type(data_typ
 }
 
 void Dataset::read_csv(string path) {
-    // open file, throw exception if it is not
-    ifstream file(path);
+	// open file, throw exception if it is not
+	ifstream file(path);
 
-    if (!file.is_open()) {
-        throw std::runtime_error("Error: file not found at " + path);
+    	if (!file.is_open()) {
+        	throw std::runtime_error("Error: file not found at " + path);
+    	}
+
+    	// Clear existing data
+    	columns.clear();
+    	data.clear();
+
+    	// get the first line, which is the columns.
+    	string col_line;
+    	if (getline(file, col_line)) {
+        	stringstream ss(col_line);
+        	string cell;
+
+        	while (getline(ss, cell, ',')) {
+            		columns.push_back(cell);
+        	}
     }
 
-    // Clear existing data
-    columns.clear();
-    data.clear();
+    	// get the values and put them into the data 1D vector.
+    	string line;
+    	while (getline(file, line)) {
+        	stringstream ss(line);
+        	string cell;
 
-    // get the first line, which is the columns.
-    string col_line;
-    if (getline(file, col_line)) {
-        stringstream ss(col_line);
-        string cell;
         while (getline(ss, cell, ',')) {
-            columns.push_back(cell);
-        }
-    }
-
-    // get the values and put them into the data 1D vector.
-    string line;
-    while (getline(file, line)) {
-        stringstream ss(line);
-        string cell;
-        while (getline(ss, cell, ',')) {
-            try {
-                data.push_back(std::stof(cell));
-            } catch (const std::invalid_argument& e) {
-                cerr << "Could not convert string to float: " << cell << endl;
-            }
+        	try {
+                	data.push_back(std::stof(cell));
+            	} catch (const std::invalid_argument& e) {
+                	cerr << "Could not convert string to float: " << cell << endl;
+            	}
         }
     }
 }
 
 const vector<float>& Dataset::get_data() const { // getter method for the data 
-    return data;
+	return data;
 }
 
 string Dataset::get_path() const { // getter for file path 
@@ -98,7 +91,7 @@ string Dataset::get_type() const {
 }
 
 const vector<string>& Dataset::get_columns() const {
-    return columns;
+	return columns;
 }
 
 
@@ -116,8 +109,7 @@ void Dataset::set_type(string new_type) {
 	type = new_type;	
 }
 
-// --- New Implementations for In-Memory Data ---
-
+// for data loaded in memory
 Dataset::Dataset(const std::vector<std::vector<float>>& features, const std::vector<float>& targets)
     : m_features(features), m_targets(targets) {
     // This constructor is for in-memory data, so file_path and type can be empty.
@@ -125,19 +117,15 @@ Dataset::Dataset(const std::vector<std::vector<float>>& features, const std::vec
 }
 
 const std::vector<std::vector<float>>& Dataset::getFeatures() const {
-    // In a real application, you might want to add logic here to extract
-    // features from the 'data' vector if the object was constructed from a file.
-    // For this demo, we assume it was constructed with in-memory data.
     if (m_features.empty() && !data.empty()) {
-        throw std::logic_error("getFeatures() is not supported for file-loaded datasets in this demo.");
+        throw std::logic_error("The features is empty but the data is not.");
     }
     return m_features;
 }
 
 const std::vector<float>& Dataset::getTargets() const {
-    // Similar to getFeatures, this is simplified for the demo.
     if (m_targets.empty() && !data.empty()) {
-        throw std::logic_error("getTargets() is not supported for file-loaded datasets in this demo.");
+        throw std::logic_error("There are no target variables, but the data is not empty.");
     }
     return m_targets;
 }

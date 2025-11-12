@@ -9,40 +9,35 @@ XGBoostBuilder::XGBoostBuilder()
       regularization("L2") {}
 
 XGBoostBuilder& XGBoostBuilder::setNEstimators(int count) {
-    nEstimators = count;
-    return *this;
+	nEstimators = count;
+	return *this;
 }
 
 XGBoostBuilder& XGBoostBuilder::setLearningRate(float rate) {
-    learningRate = rate;
-    return *this;
+	learningRate = rate;
+    	return *this;
 }
 
 XGBoostBuilder& XGBoostBuilder::setMaxDepth(int depthValue) {
-    maxDepth = depthValue;
-    return *this;
+    	maxDepth = depthValue;
+    	return *this;
 }
 
 XGBoostBuilder& XGBoostBuilder::setSubsampleRatio(float ratioValue) {
-    subsampleRatio = ratioValue;
-    return *this;
+	subsampleRatio = ratioValue;
+    	return *this;
 }
 
 XGBoostBuilder& XGBoostBuilder::setGamma(float gammaValue) {
-    gamma = gammaValue;
-    return *this;
+    	gamma = gammaValue;
+    	return *this;
 }
 
 XGBoostBuilder& XGBoostBuilder::setRegularization(const std::string& regularizationType) {
-    regularization = regularizationType;
-    return *this;
+    	regularization = regularizationType;
+    	return *this;
 }
 
 std::unique_ptr<XGBoostModel> XGBoostBuilder::build() {
-    return std::make_unique<XGBoostModel>(nEstimators,
-                                          learningRate,
-                                          maxDepth,
-                                          subsampleRatio,
-                                          gamma,
-                                          regularization);
+    	return std::make_unique<XGBoostModel>(nEstimators, learningRate, maxDepth, subsampleRatio, gamma, regularization);
 }

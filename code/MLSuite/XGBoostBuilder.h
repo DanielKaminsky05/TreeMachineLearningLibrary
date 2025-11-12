@@ -7,24 +7,24 @@
 
 class XGBoostBuilder {
 public:
-    XGBoostBuilder();
+	XGBoostBuilder();
 
-    XGBoostBuilder& setNEstimators(int count);
-    XGBoostBuilder& setLearningRate(float rate);
-    XGBoostBuilder& setMaxDepth(int depthValue);
-    XGBoostBuilder& setSubsampleRatio(float ratioValue);
-    XGBoostBuilder& setGamma(float gammaValue);
-    XGBoostBuilder& setRegularization(const std::string& regularizationType);
+	XGBoostBuilder& setNEstimators(int count);
+    	XGBoostBuilder& setLearningRate(float rate);
+    	XGBoostBuilder& setMaxDepth(int depthValue);
+    	XGBoostBuilder& setSubsampleRatio(float ratioValue);
+    	XGBoostBuilder& setGamma(float gammaValue);
+    	XGBoostBuilder& setRegularization(const std::string& regularizationType);
 
-    std::unique_ptr<XGBoostModel> build();
+    	std::unique_ptr<XGBoostModel> build();
 
 private:
-    int nEstimators;
-    float learningRate;
-    int maxDepth;
-    float subsampleRatio;
-    float gamma;
-    std::string regularization;
+    	int nEstimators;
+    	float learningRate;
+    	int maxDepth;
+    	float subsampleRatio;
+    	float gamma;
+    	std::string regularization;
 };
 
-#endif // XGBOOSTBUILDER_H
+#endif 

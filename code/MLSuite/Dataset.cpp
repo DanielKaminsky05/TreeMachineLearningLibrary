@@ -108,24 +108,3 @@ void Dataset::set_path(string new_path) {
 void Dataset::set_type(string new_type) { 
 	type = new_type;	
 }
-
-// for data loaded in memory
-Dataset::Dataset(const std::vector<std::vector<float>>& features, const std::vector<float>& targets)
-    : m_features(features), m_targets(targets) {
-    // This constructor is for in-memory data, so file_path and type can be empty.
-    this->type = "in-memory";
-}
-
-const std::vector<std::vector<float>>& Dataset::getFeatures() const {
-    if (m_features.empty() && !data.empty()) {
-        throw std::logic_error("The features is empty but the data is not.");
-    }
-    return m_features;
-}
-
-const std::vector<float>& Dataset::getTargets() const {
-    if (m_targets.empty() && !data.empty()) {
-        throw std::logic_error("There are no target variables, but the data is not empty.");
-    }
-    return m_targets;
-}

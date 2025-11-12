@@ -21,10 +21,10 @@ private:
 
 
 public: 
-	// Original constructor for reading from a file
+	// constructor for loading dataset from a file 
 	Dataset(std::string path, std::string data_type);
 
-	// New constructor for in-memory data
+	// constructor for in-memory data
 	Dataset(const std::vector<std::vector<float>>& features, const std::vector<float>& targets);
 	
 	// getters 
@@ -33,7 +33,7 @@ public:
 	std::string get_type() const;
 	const std::vector<std::string>& get_columns() const;
 
-	// New getters for benchmark
+	// getters for benchmark
 	const std::vector<std::vector<float>>& getFeatures() const;
 	const std::vector<float>& getTargets() const;
 

@@ -8,21 +8,19 @@
 
 class RandomForest : public IModel {
     public:
-	// TODO: check implementation for this class.
         RandomForest(int Estimators, int maxDepth, int minSamplesSplit, int maxFeatures, bool bootstrap, int randomState);
-	// 100, -1, 2, 0, true, 0
         void fit(const std::vector<std::vector<double>>& X, const std::vector<double>& Y);
         double predict(const std::vector<double>& X);
         std::vector<DecisionTree> getTrees() {return trees;};
 
-	// Corrected IModel interface methods
+	// IModel interface methods
 	void fit(const std::vector<float>& x_values, const std::vector<std::string>& columns, const std::vector<float>& y_values) override;
 	std::vector<float> predict(const std::vector<float>& x_values, const std::vector<std::string>& columns) const override;
 	std::string getName() const override;
     private:
         int nEstimators;
         int maxDepth;
-        int minSamplesSplit;
+	int minSamplesSplit;
         int maxFeatures;
         bool bootstrap;
         int randomState;

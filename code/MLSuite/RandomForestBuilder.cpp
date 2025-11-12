@@ -6,38 +6,38 @@ RandomForestBuilder::RandomForestBuilder()
       mMinSamplesSplit(2),
       mMaxFeatures(0),
       mBootstrap(true),
-      mRandomState(0) {}
+      mRandomState(0) {} // random forest builder constructor 
 
 RandomForestBuilder& RandomForestBuilder::setEstimators(int estimators) {
-    nEstimators = estimators;
-    return *this;
+	nEstimators = estimators;
+	return *this;
 }
 
 RandomForestBuilder& RandomForestBuilder::setMaxDepth(int maxDepth) {
-    mMaxDepth = maxDepth;
-    return *this;
+    	mMaxDepth = maxDepth;
+    	return *this;
 }
 
 RandomForestBuilder& RandomForestBuilder::setMinSamplesSplit(int minSamplesSplit) {
-    mMinSamplesSplit = minSamplesSplit;
-    return *this;
+    	mMinSamplesSplit = minSamplesSplit;
+    	return *this;
 }
 
 RandomForestBuilder& RandomForestBuilder::setMaxFeatures(int maxFeatures) {
-    mMaxFeatures = maxFeatures;
-    return *this;
+    	mMaxFeatures = maxFeatures;
+    	return *this;
 }
 
 RandomForestBuilder& RandomForestBuilder::setBootstrap(bool bootstrap) {
-    mBootstrap = bootstrap;
-    return *this;
+    	mBootstrap = bootstrap;
+    	return *this;
 }
 
 RandomForestBuilder& RandomForestBuilder::setRandomState(int randomState) {
-    mRandomState = randomState;
-    return *this;
+    	mRandomState = randomState;
+    	return *this;
 }
 
 std::unique_ptr<RandomForest> RandomForestBuilder::build() {
-    return std::make_unique<RandomForest>(nEstimators, mMaxDepth, mMinSamplesSplit, mMaxFeatures, mBootstrap, mRandomState);
+    	return std::make_unique<RandomForest>(nEstimators, mMaxDepth, mMinSamplesSplit, mMaxFeatures, mBootstrap, mRandomState);
 }

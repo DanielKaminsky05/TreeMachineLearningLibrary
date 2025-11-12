@@ -7,16 +7,14 @@
 
 class ClassicModelFactory {
 public:
-    	// Creates a Linear Regression model
-    	std::unique_ptr<IModel> createLinRegModel();
+	std::unique_ptr<IModel> createLinRegModel(); // linreg 
 
-	// instantiate and fit a random forest model with default params
-	std::unique_ptr<IModel> createRandomForestModel(int nEstimators = 100, int maxDepth = 10, int minSamplesSplit = 2);
+	std::unique_ptr<IModel> createRandomForestModel(int nEstimators = 100, int maxDepth = 10, int minSamplesSplit = 2); // random forest
 
-	std::unique_ptr<IModel> createXGBoostModel(int nEstimators = 100, float learningRate = 0.1f, int maxDepth = 3, float subsampleRatio = 1.0f, float gamma = 0.0f, const std::string& regularization = "L2");
+	std::unique_ptr<IModel> createXGBoostModel(int nEstimators = 100, float learningRate = 0.1f, int maxDepth = 3, float subsampleRatio = 1.0f, float gamma = 0.0f, const std::string& regularization = "L2"); // XGBoost 
 
 
 
 };
 
-#endif // CLASSICMODELFACTORY_H
+#endif 

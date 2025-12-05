@@ -1,12 +1,22 @@
 #ifndef CLASSICMODELFACTORY_H
 #define CLASSICMODELFACTORY_H
 
+#include "HyperparameterSearch.h"
 #include "IModel.h"
 #include <memory>
 #include <string>
 
-class ClassicModelFactory {
+class ClassicModelFactory : public HyperparameterSearch {
 public:
+
+	std::unique_ptr<IModel> randomSearch(
+		const std::string& modelType,
+        const std::vector<std::vector<std::string>>& hyperParams,
+        const std::vector<std::vector<double>>& X,
+        const std::vector<double>& y) override;
+
+
+
 	std::unique_ptr<IModel> createLinRegModel(); // linreg 
 
 	std::unique_ptr<IModel> createRandomForestModel(int nEstimators = 100, int maxDepth = 10, int minSamplesSplit = 2); // random forest

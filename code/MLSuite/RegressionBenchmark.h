@@ -5,7 +5,10 @@
 
 class RegressionBenchmark : public BenchmarkStrategy {
 public:
-    void execute(const IModel& model, const Dataset& xData, const Dataset& actualData) const override;
+    BenchmarkResult execute(const IModel& model,
+                            const Dataset& xData,
+                            const Dataset& actualData,
+                            double fitMillis = 0.0) const override;
 };
 
 #endif // REGRESSIONBENCHMARK_H

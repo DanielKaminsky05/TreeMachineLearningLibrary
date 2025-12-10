@@ -3,9 +3,12 @@
 #include "RandomForestBuilder.h"
 #include "LinearRegressionBuilder.h" // Include the builder header
 #include "XGBoostBuilder.h"
-#include <Eigen/Dense> // Keep if still needed by other parts of the fact#include <limits>
+#include <Eigen/Dense> 
+#include <limits>
 #include <random>
 #include <stdexcept>
+#include <algorithm>
+#include <numeric>
 
 namespace {
 
@@ -60,9 +63,31 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 	// Fixed seed for reproducibility
 	std::mt19937 rng(42u);
 	const int maxIterations = 20;
+    const int kFolds = 5;
 
-	double bestMSE = std::numeric_limits<double>::infinity();
+    // Prepare shuffled indices for K-Fold Cross Validation
+    std::vector<size_t> indices(X.size());
+    std::iota(indices.begin(), indices.end(), 0);
+    std::shuffle(indices.begin(), indices.end(), rng);
+
+	double bestAvgMSE = std::numeric_limits<double>::infinity();
 	std::unique_ptr<IModel> bestModel;
+
+    // Parameters to store the best configuration found
+    // RandomForest
+    int bestRF_nEstimators = 0;
+    int bestRF_maxDepth = 0;
+    int bestRF_minSamplesSplit = 0;
+
+    // XGBoost
+    int bestXGB_nEstimators = 0;
+    float bestXGB_learningRate = 0.0f;
+    int bestXGB_maxDepth = 0;
+    float bestXGB_subsampleRatio = 0.0f;
+    float bestXGB_gamma = 0.0f;
+    std::string bestXGB_regularization;
+
+    bool foundAny = false;
 
 	if (modelType == "RandomForest") {
 		// Expected order:
@@ -84,20 +109,65 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 			int maxDepth        = std::stoi(pickRandom(maxDepthVals, rng));
 			int minSamplesSplit = std::stoi(pickRandom(minSamplesSplitVals, rng));
 
-			auto rf = RandomForestBuilder()
-				.setEstimators(nEstimators)
-				.setMaxDepth(maxDepth)
-				.setMinSamplesSplit(minSamplesSplit)
-				.build();
+            double totalMSE = 0.0;
 
-			rf->fit(X, y);
-			double mse = computeMSE(*rf, X, y);
+            // K-Fold Loop
+            for (int k = 0; k < kFolds; ++k) {
+                std::vector<std::vector<double>> trainX, valX;
+                std::vector<double> trainY, valY;
+                
+                // Reserve memory to avoid reallocations
+                trainX.reserve(X.size()); 
+                valX.reserve(X.size() / kFolds + 2);
+                trainY.reserve(y.size()); 
+                valY.reserve(y.size() / kFolds + 2);
 
-			if (mse < bestMSE) {
-				bestMSE = mse;
-				bestModel = std::move(rf);
+                size_t foldSize = X.size() / kFolds;
+                size_t start = k * foldSize;
+                size_t end = (k == kFolds - 1) ? X.size() : start + foldSize;
+
+                for (size_t i = 0; i < X.size(); ++i) {
+                    if (i >= start && i < end) {
+                        valX.push_back(X[indices[i]]);
+                        valY.push_back(y[indices[i]]);
+                    } else {
+                        trainX.push_back(X[indices[i]]);
+                        trainY.push_back(y[indices[i]]);
+                    }
+                }
+
+                auto rf = RandomForestBuilder()
+                    .setEstimators(nEstimators)
+                    .setMaxDepth(maxDepth)
+                    .setMinSamplesSplit(minSamplesSplit)
+                    .build();
+
+                rf->fit(trainX, trainY);
+                totalMSE += computeMSE(*rf, valX, valY);
+            }
+
+            double avgMSE = totalMSE / kFolds;
+
+			if (avgMSE < bestAvgMSE) {
+				bestAvgMSE = avgMSE;
+                bestRF_nEstimators = nEstimators;
+                bestRF_maxDepth = maxDepth;
+                bestRF_minSamplesSplit = minSamplesSplit;
+                foundAny = true;
 			}
 		}
+
+        // Rebuild best model on full dataset
+        if (foundAny) {
+            auto finalRf = RandomForestBuilder()
+                .setEstimators(bestRF_nEstimators)
+                .setMaxDepth(bestRF_maxDepth)
+                .setMinSamplesSplit(bestRF_minSamplesSplit)
+                .build();
+            finalRf->fit(X, y);
+            bestModel = std::move(finalRf);
+        }
+
 	} else if (modelType == "XGBoost") {
 		// Expected order:
 		//   hyperParams[0] -> candidates for nEstimators (int)
@@ -127,23 +197,72 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 			float gamma            = std::stof(pickRandom(gammaVals, rng));
 			std::string regularization = pickRandom(regularizationVals, rng);
 
-			auto xgb = XGBoostBuilder()
-				.setNEstimators(nEstimators)
-				.setLearningRate(learningRate)
-				.setMaxDepth(maxDepth)
-				.setSubsampleRatio(subsampleRatio)
-				.setGamma(gamma)
-				.setRegularization(regularization)
-				.build();
+            double totalMSE = 0.0;
 
-			xgb->fit(X, y);
-			double mse = computeMSE(*xgb, X, y);
+            // K-Fold Loop
+            for (int k = 0; k < kFolds; ++k) {
+                std::vector<std::vector<double>> trainX, valX;
+                std::vector<double> trainY, valY;
 
-			if (mse < bestMSE) {
-				bestMSE = mse;
-				bestModel = std::move(xgb);
+                trainX.reserve(X.size()); 
+                valX.reserve(X.size() / kFolds + 2);
+                trainY.reserve(y.size()); 
+                valY.reserve(y.size() / kFolds + 2);
+
+                size_t foldSize = X.size() / kFolds;
+                size_t start = k * foldSize;
+                size_t end = (k == kFolds - 1) ? X.size() : start + foldSize;
+
+                for (size_t i = 0; i < X.size(); ++i) {
+                    if (i >= start && i < end) {
+                        valX.push_back(X[indices[i]]);
+                        valY.push_back(y[indices[i]]);
+                    } else {
+                        trainX.push_back(X[indices[i]]);
+                        trainY.push_back(y[indices[i]]);
+                    }
+                }
+
+                auto xgb = XGBoostBuilder()
+                    .setNEstimators(nEstimators)
+                    .setLearningRate(learningRate)
+                    .setMaxDepth(maxDepth)
+                    .setSubsampleRatio(subsampleRatio)
+                    .setGamma(gamma)
+                    .setRegularization(regularization)
+                    .build();
+
+                xgb->fit(trainX, trainY);
+                totalMSE += computeMSE(*xgb, valX, valY);
+            }
+
+            double avgMSE = totalMSE / kFolds;
+
+			if (avgMSE < bestAvgMSE) {
+				bestAvgMSE = avgMSE;
+                bestXGB_nEstimators = nEstimators;
+                bestXGB_learningRate = learningRate;
+                bestXGB_maxDepth = maxDepth;
+                bestXGB_subsampleRatio = subsampleRatio;
+                bestXGB_gamma = gamma;
+                bestXGB_regularization = regularization;
+                foundAny = true;
 			}
 		}
+
+        // Rebuild best model on full dataset
+        if (foundAny) {
+            auto finalXgb = XGBoostBuilder()
+                .setNEstimators(bestXGB_nEstimators)
+                .setLearningRate(bestXGB_learningRate)
+                .setMaxDepth(bestXGB_maxDepth)
+                .setSubsampleRatio(bestXGB_subsampleRatio)
+                .setGamma(bestXGB_gamma)
+                .setRegularization(bestXGB_regularization)
+                .build();
+            finalXgb->fit(X, y);
+            bestModel = std::move(finalXgb);
+        }
 	}
 
 	return bestModel;
@@ -176,6 +295,3 @@ std::unique_ptr<IModel> ClassicModelFactory::createXGBoostModel(int nEstimators,
         	.setRegularization(regularization)
         	.build();
 }
-
-
-

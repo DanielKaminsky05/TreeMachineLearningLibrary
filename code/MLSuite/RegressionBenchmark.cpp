@@ -1,13 +1,16 @@
 #include "RegressionBenchmark.h"
 #include "IModel.h"
 #include "Dataset.h"
+#include "BenchmarkStrategy.h"
 #include <iostream>
 #include <vector>
 #include <numeric>
 #include <cmath>
+#include <chrono>
 
+namespace {
 // Helper function to calculate Mean Squared Error (MSE)
-static double calculateMSE(const std::vector<float>& actual, const std::vector<float>& predicted) {
+double calculateMSE(const std::vector<float>& actual, const std::vector<float>& predicted) {
     double mse = 0.0;
     if (actual.empty()) return 0.0;
     for (size_t i = 0; i < actual.size(); ++i) {
@@ -17,7 +20,7 @@ static double calculateMSE(const std::vector<float>& actual, const std::vector<f
 }
 
 // Helper function to calculate R-squared
-static double calculateR2(const std::vector<float>& actual, const std::vector<float>& predicted) {
+double calculateR2(const std::vector<float>& actual, const std::vector<float>& predicted) {
     if (actual.empty()) return 0.0;
     double sum_actual = std::accumulate(actual.begin(), actual.end(), 0.0);
     double mean_actual = sum_actual / actual.size();
@@ -32,39 +35,53 @@ static double calculateR2(const std::vector<float>& actual, const std::vector<fl
 
     if (ss_total == 0.0) {
         // If total sum of squares is zero, R-squared is undefined or can be considered 1 if predictions are perfect.
-        // For simplicity, returning 1 if residuals are also zero, otherwise 0.
         return (ss_res == 0.0) ? 1.0 : 0.0;
     }
 
     return 1.0 - (ss_res / ss_total);
 }
+} // namespace
 
+BenchmarkResult RegressionBenchmark::execute(const IModel& model,
+                                             const Dataset& xData,
+                                             const Dataset& actualData,
+                                             double fitMillis) const {
+    BenchmarkResult result;
+    result.modelName = model.getName();
+    result.taskType = "regression";
+    result.numSamples = actualData.get_data().size();
+    result.fitMillis = fitMillis;
 
-void RegressionBenchmark::execute(const IModel& model, const Dataset& xData, const Dataset& actualData) const {
-    std::cout << "\nExecuting regression benchmark..." << std::endl;
-
-    // Note: I am assuming your model and dataset classes have these methods.
-    // You may need to adjust these calls to match your actual class designs.
+    const auto startPredict = std::chrono::high_resolution_clock::now();
     std::vector<float> predictions = model.predict(xData.get_data(), xData.get_columns());
+    const auto endPredict = std::chrono::high_resolution_clock::now();
+    result.predictMillis = millisBetween(startPredict, endPredict);
+
+    result.memoryBytes = static_cast<std::size_t>(currentMemoryUsageBytes());
+
     const std::vector<float>& actual = actualData.get_data();
 
     if (predictions.size() != actual.size()) {
         std::cerr << "Benchmark Error: Prediction size does not match actual size." << std::endl;
-        return;
+        return result;
     }
 
-    // Calculate metrics using helper functions
-    double mse = calculateMSE(actual, predictions);
-    double rmse = std::sqrt(mse);
-    double r2 = calculateR2(actual, predictions);
+    result.mse = calculateMSE(actual, predictions);
+    result.rmse = std::sqrt(result.mse);
+    result.r2 = calculateR2(actual, predictions);
 
-    // Print results
     std::cout << "----------------------------------------" << std::endl;
-    std::cout << "           Benchmark Results            " << std::endl;
+    std::cout << "       Regression Benchmark Results     " << std::endl;
     std::cout << "----------------------------------------" << std::endl;
-    std::cout << "Model: " << model.getName() << std::endl; // Assuming a getName() method on IModel
-    std::cout << "Mean Squared Error (MSE): " << mse << std::endl;
-    std::cout << "Root Mean Squared Error (RMSE): " << rmse << std::endl;
-    std::cout << "R-squared: " << r2 << std::endl;
+    std::cout << "Model: " << result.modelName << std::endl;
+    std::cout << "Samples: " << result.numSamples << std::endl;
+    std::cout << "Fit time (ms): " << result.fitMillis << std::endl;
+    std::cout << "Predict time (ms): " << result.predictMillis << std::endl;
+    std::cout << "Memory (bytes): " << result.memoryBytes << std::endl;
+    std::cout << "MSE: " << result.mse << std::endl;
+    std::cout << "RMSE: " << result.rmse << std::endl;
+    std::cout << "R-squared: " << result.r2 << std::endl;
     std::cout << "----------------------------------------" << std::endl;
+
+    return result;
 }

@@ -13,10 +13,15 @@ add_executable(assignment2
 	code/MLSuite/LinearRegressionBuilder.cpp
 	code/MLSuite/RandomForest.cpp
 	code/MLSuite/RandomForestBuilder.cpp
-	code/MLSuite/DecisionTree.cpp
-	code/MLSuite/RegressionBenchmark.cpp
-	code/MLSuite/BenchmarkStrategy.cpp
-	code/MLSuite/ClassicModelFactory.cpp
-	code/MLSuite/XGBoostModel.cpp
-	code/MLSuite/XGBoostBuilder.cpp
+    	code/MLSuite/DecisionTree.cpp
+    	code/MLSuite/RegressionBenchmark.cpp
+    	code/MLSuite/ClassificationBenchmark.cpp
+    	code/MLSuite/BenchmarkStrategy.cpp
+    	code/MLSuite/ClassicModelFactory.cpp
+    	code/MLSuite/XGBoostModel.cpp
+    	code/MLSuite/XGBoostBuilder.cpp
 )
+
+if (WIN32)
+    target_link_libraries(assignment2 PRIVATE Psapi)
+endif()

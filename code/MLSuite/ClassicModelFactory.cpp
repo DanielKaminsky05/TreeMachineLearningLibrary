@@ -12,6 +12,22 @@
 
 namespace {
 
+bool isValidDatasetType(const std::string& type) {
+	return type == "train" || type == "test" || type == "val";
+}
+
+void ensurePathSet(const std::string& path, const char* label) {
+	if (path.empty()) {
+		throw std::invalid_argument(std::string("ClassicModelFactory: missing ") + label + " path.");
+	}
+}
+
+void ensureTypeValid(const std::string& type, const char* label) {
+	if (!isValidDatasetType(type)) {
+		throw std::invalid_argument(std::string("ClassicModelFactory: invalid ") + label + " type: " + type);
+	}
+}
+
 // Helper to compute Mean Squared Error (MSE) for models that expose:
 //   double predict(const std::vector<double>&)
 template <typename ModelT>
@@ -41,6 +57,91 @@ const std::string& pickRandom(const std::vector<std::string>& values, std::mt199
 }
 
 } // namespace
+
+ClassicModelFactory::ClassicModelFactory(const std::string& trainFeaturesPath,
+	const std::string& trainTargetsPath,
+	const std::string& testFeaturesPath,
+	const std::string& testTargetsPath,
+	const std::string& trainType,
+	const std::string& testType)
+	: m_trainFeaturesPath(trainFeaturesPath),
+	m_trainTargetsPath(trainTargetsPath),
+	m_testFeaturesPath(testFeaturesPath),
+	m_testTargetsPath(testTargetsPath),
+	m_trainType(trainType),
+	m_testType(testType) {}
+
+void ClassicModelFactory::setTrainDataPaths(const std::string& featuresPath,
+	const std::string& targetsPath,
+	const std::string& type) {
+	ensureTypeValid(type, "train");
+	m_trainFeaturesPath = featuresPath;
+	m_trainTargetsPath = targetsPath;
+	m_trainType = type;
+}
+
+void ClassicModelFactory::setTestDataPaths(const std::string& featuresPath,
+	const std::string& targetsPath,
+	const std::string& type) {
+	ensureTypeValid(type, "test");
+	m_testFeaturesPath = featuresPath;
+	m_testTargetsPath = targetsPath;
+	m_testType = type;
+}
+
+const std::string& ClassicModelFactory::getTrainFeaturesPath() const {
+	return m_trainFeaturesPath;
+}
+
+const std::string& ClassicModelFactory::getTrainTargetsPath() const {
+	return m_trainTargetsPath;
+}
+
+const std::string& ClassicModelFactory::getTrainType() const {
+	return m_trainType;
+}
+
+const std::string& ClassicModelFactory::getTestFeaturesPath() const {
+	return m_testFeaturesPath;
+}
+
+const std::string& ClassicModelFactory::getTestTargetsPath() const {
+	return m_testTargetsPath;
+}
+
+const std::string& ClassicModelFactory::getTestType() const {
+	return m_testType;
+}
+
+Dataset ClassicModelFactory::loadTrainFeatures() const {
+	ensurePathSet(m_trainFeaturesPath, "train features");
+	ensureTypeValid(m_trainType, "train");
+	return Dataset(m_trainFeaturesPath, m_trainType);
+}
+
+Dataset ClassicModelFactory::loadTrainTargets() const {
+	ensurePathSet(m_trainTargetsPath, "train targets");
+	ensureTypeValid(m_trainType, "train");
+	return Dataset(m_trainTargetsPath, m_trainType);
+}
+
+Dataset ClassicModelFactory::loadTestFeatures() const {
+	ensurePathSet(m_testFeaturesPath, "test features");
+	ensureTypeValid(m_testType, "test");
+	return Dataset(m_testFeaturesPath, m_testType);
+}
+
+Dataset ClassicModelFactory::loadTestTargets() const {
+	ensurePathSet(m_testTargetsPath, "test targets");
+	ensureTypeValid(m_testType, "test");
+	return Dataset(m_testTargetsPath, m_testType);
+}
+
+void ClassicModelFactory::fitModel(IModel& model) const {
+	Dataset features = loadTrainFeatures();
+	Dataset targets = loadTrainTargets();
+	model.fit(features.get_data(), features.get_columns(), targets.get_data());
+}
 
 std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 	const std::string& modelType,

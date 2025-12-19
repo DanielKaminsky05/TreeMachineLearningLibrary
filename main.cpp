@@ -15,20 +15,29 @@ int main() {
     try {
 
         // 1. Create the factory and benchmark strategy objects
-        ClassicModelFactory factory;
+        ClassicModelFactory regressionFactory(
+            "../data-preprocessing/data-files/regression/housing_data/housing_X_train_processed.csv",
+            "../data-preprocessing/data-files/regression/housing_data/housing_y_train.csv",
+            "../data-preprocessing/data-files/regression/housing_data/housing_X_test_processed.csv",
+            "../data-preprocessing/data-files/regression/housing_data/housing_y_test.csv");
+        ClassicModelFactory classificationFactory(
+            "../data-preprocessing/data-files/classification/iris_dataset/iris_X_train_processed.csv",
+            "../data-preprocessing/data-files/classification/iris_dataset/iris_y_train.csv",
+            "../data-preprocessing/data-files/classification/iris_dataset/iris_X_test_processed.csv",
+            "../data-preprocessing/data-files/classification/iris_dataset/iris_y_test.csv");
         RegressionBenchmark benchmark;
         ClassificationBenchmark classificationBenchmark;
         
-        Dataset x_train("../data-preprocessing/data-files/regression/housing_data/housing_X_train_processed.csv", "train");
-        Dataset y_train("../data-preprocessing/data-files/regression/housing_data/housing_y_train.csv", "train");
-        Dataset x_test("../data-preprocessing/data-files/regression/housing_data/housing_X_test_processed.csv", "test");
-        Dataset y_test("../data-preprocessing/data-files/regression/housing_data/housing_y_test.csv", "test");
+        Dataset x_train = regressionFactory.loadTrainFeatures();
+        Dataset y_train = regressionFactory.loadTrainTargets();
+        Dataset x_test = regressionFactory.loadTestFeatures();
+        Dataset y_test = regressionFactory.loadTestTargets();
 
         // Classification datasets (Iris)
-        Dataset cx_train("../data-preprocessing/data-files/classification/iris_dataset/iris_X_train_processed.csv", "train");
-        Dataset cy_train("../data-preprocessing/data-files/classification/iris_dataset/iris_y_train.csv", "train");
-        Dataset cx_test("../data-preprocessing/data-files/classification/iris_dataset/iris_X_test_processed.csv", "test");
-        Dataset cy_test("../data-preprocessing/data-files/classification/iris_dataset/iris_y_test.csv", "test");
+        Dataset cx_train = classificationFactory.loadTrainFeatures();
+        Dataset cy_train = classificationFactory.loadTrainTargets();
+        Dataset cx_test = classificationFactory.loadTestFeatures();
+        Dataset cy_test = classificationFactory.loadTestTargets();
 
         auto timeFit = [](IModel& model, const Dataset& features, const Dataset& targets) -> double {
             auto start = std::chrono::high_resolution_clock::now();
@@ -42,7 +51,7 @@ int main() {
         {
             std::cout << "\n--- Benchmarking Linear Regression ---" << std::endl;
             // Create the model via the factory. It returns a std::unique_ptr<IModel>.
-            std::unique_ptr<IModel> model = factory.createLinRegModel();
+            std::unique_ptr<IModel> model = regressionFactory.createLinRegModel();
 
             // Fit the model using the IModel interface
             double fitMs = timeFit(*model, x_train, y_train);
@@ -61,7 +70,7 @@ int main() {
         {
             std::cout << "\n--- Benchmarking Random Forest ---" << std::endl;
             // Create a different model from the same factory
-            std::unique_ptr<IModel> model = factory.createRandomForestModel(50, 10, 2); // nEstimators, maxDepth, minSamplesSplit
+            std::unique_ptr<IModel> model = regressionFactory.createRandomForestModel(50, 10, 2); // nEstimators, maxDepth, minSamplesSplit
 
             // Fit the model
             double fitMs = timeFit(*model, x_train, y_train);
@@ -80,7 +89,7 @@ int main() {
         {
             std::cout << "\n--- Benchmarking XGBoost ---" << std::endl;
             // Create a different model from the same factory
-            std::unique_ptr<IModel> model = factory.createXGBoostModel(50, 0.1f, 10, 0.8f, 0.1f, "L2");
+            std::unique_ptr<IModel> model = regressionFactory.createXGBoostModel(50, 0.1f, 10, 0.8f, 0.1f, "L2");
 
             // Fit the model
             double fitMs = timeFit(*model, x_train, y_train);
@@ -98,7 +107,7 @@ int main() {
         // 6. Classification benchmark (Random Forest on Iris dataset)
         {
             std::cout << "\n--- Classification Benchmark: Random Forest (Iris) ---" << std::endl;
-            std::unique_ptr<IModel> model = factory.createRandomForestModel(50, 10, 2);
+            std::unique_ptr<IModel> model = classificationFactory.createRandomForestModel(50, 10, 2);
             double fitMs = timeFit(*model, cx_train, cy_train);
             classificationBenchmark.execute(*model, cx_test, cy_test, fitMs);
         }

@@ -18,9 +18,10 @@ private:
     	std::vector<DecisionTree> trees;
     	double initialBias = 0.0;
     	bool isFitted = false;
+        bool isClassification = false;
 
 public:
-	XGBoostModel(int nEstimators, float learningRate, int maxDepth, float subsampleRatio, float gamma, std::string regularization);
+	XGBoostModel(int nEstimators, float learningRate, int maxDepth, float subsampleRatio, float gamma, std::string regularization, bool isClassification = false);
 
     	double predict(const std::vector<double>& input) const;
     	void fit(const std::vector<std::vector<double>>& X, const std::vector<double>& Y);

@@ -6,7 +6,8 @@ XGBoostBuilder::XGBoostBuilder()
       maxDepth(3),
       subsampleRatio(1.0f),
       gamma(0.0f),
-      regularization("L2") {}
+      regularization("L2"),
+      isClassification(false) {}
 
 XGBoostBuilder& XGBoostBuilder::setNEstimators(int count) {
 	nEstimators = count;
@@ -38,6 +39,11 @@ XGBoostBuilder& XGBoostBuilder::setRegularization(const std::string& regularizat
     	return *this;
 }
 
+XGBoostBuilder& XGBoostBuilder::setIsClassification(bool isClassificationValue) {
+    isClassification = isClassificationValue;
+    return *this;
+}
+
 std::unique_ptr<XGBoostModel> XGBoostBuilder::build() {
-    	return std::make_unique<XGBoostModel>(nEstimators, learningRate, maxDepth, subsampleRatio, gamma, regularization);
+    	return std::make_unique<XGBoostModel>(nEstimators, learningRate, maxDepth, subsampleRatio, gamma, regularization, isClassification);
 }

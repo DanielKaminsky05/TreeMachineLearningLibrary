@@ -15,6 +15,7 @@ public:
     	XGBoostBuilder& setSubsampleRatio(float ratioValue);
     	XGBoostBuilder& setGamma(float gammaValue);
     	XGBoostBuilder& setRegularization(const std::string& regularizationType);
+        XGBoostBuilder& setIsClassification(bool isClassification);
 
     	std::unique_ptr<XGBoostModel> build();
 
@@ -25,6 +26,7 @@ private:
     	float subsampleRatio;
     	float gamma;
     	std::string regularization;
+        bool isClassification = false;
 };
 
 #endif 

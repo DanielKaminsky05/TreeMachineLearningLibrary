@@ -1,4 +1,5 @@
 // NOTE: This is a backup of the main file with RF classif, flexible benchmark strategies, and fixed print statements + type conversions
+// added Logreg.
 
 #include <iostream>
 #include <vector>
@@ -60,6 +61,7 @@ int main() {
             regressionBenchmark.trainAndExecute(*model, x_train, y_train, x_test, y_test);      
         }
 
+
         // 5. Benchmark XGBoost
         {
             // Create a different model from the same factory
@@ -105,6 +107,21 @@ int main() {
             classificationBenchmark.trainAndExecute(*model, cx_train, cy_train, cx_test, cy_test);
         }
 
+        // NOTE: XGB classif benchmark
+        {
+            // Create a different model from the same factory
+            std::unique_ptr<IModel> model = regressionFactory.createXGBoostModel(50, 0.1, 3, 1.0, 0.0, "L2", true); 
+
+            // Train and Execute benchmark
+            classificationBenchmark.trainAndExecute(*model, cx_train, cy_train, cx_test, cy_test);      
+        }
+
+	{ // NOTE: log reg model test 
+		std::unique_ptr<IModel> model = classificationFactory.createLogRegModel();
+
+		classificationBenchmark.trainAndExecute(*model, cx_train, cy_train, cx_test, cy_test);
+		
+	}
 
     } catch (const std::exception& e) {
         std::cerr << "An error occurred: " << e.what() << std::endl;
@@ -113,3 +130,4 @@ int main() {
 
     return 0;
 }
+

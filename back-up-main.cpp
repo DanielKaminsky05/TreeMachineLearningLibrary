@@ -1,5 +1,4 @@
-// NOTE: this is a back up main.cpp with the fixed random forest classification API.
-
+// NOTE: this is a backup of main.cpp with Random Search and RF classif API.
 #include <iostream>
 #include <vector>
 #include <memory>
@@ -28,7 +27,7 @@ int main() {
 		"../data-preprocessing/data-files/classification/titanic_dataset/titanic_X_test_processed.csv",
 		"../data-preprocessing/data-files/classification/titanic_dataset/titanic_y_test.csv");
 
-        RegressionBenchmark benchmark;
+        RegressionBenchmark regressionBenchmark;
         ClassificationBenchmark classificationBenchmark;
         
         Dataset x_train = regressionFactory.loadTrainFeatures();
@@ -60,7 +59,7 @@ int main() {
             double fitMs = timeFit(*model, x_train, y_train);
 
             // Execute the benchmark. The benchmark works with any IModel.
-            benchmark.execute(*model, x_test, y_test, fitMs);
+            regressionBenchmark.execute(*model, x_test, y_test, fitMs);
     
         std::vector<float> results = model->predict(x_test.get_data(), x_test.get_columns());
         for (int i = 0; i < 10; i++) {
@@ -79,7 +78,7 @@ int main() {
             double fitMs = timeFit(*model, x_train, y_train);
 
             // Execute the benchmark. The benchmark works with any IModel.
-            benchmark.execute(*model, x_test, y_test, fitMs);
+            regressionBenchmark.execute(*model, x_test, y_test, fitMs);
 
         std::vector<float> results = model->predict(x_test.get_data(), x_test.get_columns());
          for (int i = 0; i < 10; i++) {
@@ -98,13 +97,63 @@ int main() {
             double fitMs = timeFit(*model, x_train, y_train);
 
             // Execute the benchmark. The benchmark works with any IModel.
-            benchmark.execute(*model, x_test, y_test, fitMs);
+            regressionBenchmark.execute(*model, x_test, y_test, fitMs);
 
         std::vector<float> results = model->predict(x_test.get_data(), x_test.get_columns());
          for (int i = 0; i < 10; i++) {
             std::cout << results[i] << std::endl;
 
         }           
+        }
+
+        // 5.5 Random Search Demo (Strategy Pattern)
+        {
+            std::cout << "\n--- Hyperparameter Search: Random Forest (Regression) ---" << std::endl;
+            
+            // Define Hyperparameter Grid
+            std::vector<std::vector<std::string>> rfParams = {
+                {"10", "50", "100"}, // nEstimators
+                {"5", "10", "20"},   // maxDepth
+                {"2", "5", "10"}     // minSamplesSplit
+            };
+
+            // Helper to reconstruct 2D double vectors from Dataset (1D float)
+            // Ideally Dataset would expose this or RandomSearch would take Dataset.
+            auto datasetToDouble2D = [](const Dataset& d) {
+                const auto& data = d.get_data();
+                const auto& cols = d.get_columns();
+                size_t n_cols = cols.size();
+                size_t n_rows = data.size() / n_cols;
+                std::vector<std::vector<double>> out(n_rows, std::vector<double>(n_cols));
+                for(size_t i=0; i<n_rows; ++i) {
+                    for(size_t j=0; j<n_cols; ++j) {
+                        out[i][j] = static_cast<double>(data[i*n_cols + j]);
+                    }
+                }
+                return out;
+            };
+            
+            auto datasetToDouble1D = [](const Dataset& d) {
+                const auto& data = d.get_data();
+                std::vector<double> out(data.size());
+                for(size_t i=0; i<data.size(); ++i) out[i] = static_cast<double>(data[i]);
+                return out;
+            };
+
+            // Perform Random Search using the Strategy (benchmark object)
+            std::unique_ptr<IModel> bestModel = regressionFactory.randomSearch(
+                "RandomForest",
+                rfParams,
+                datasetToDouble2D(x_train),
+		datasetToDouble1D(y_train),
+                regressionBenchmark // Passing the RegressionBenchmark strategy!
+            );
+
+            std::cout << "Best Random Forest Model found. Benchmarking it..." << std::endl;
+            
+            // Benchmark the best model found
+            // Note: bestModel is already fitted by randomSearch on the full train set
+            regressionBenchmark.execute(*bestModel, x_test, y_test, 0.0 /* fit time already spent */);
         }
 
         // 6. Classification benchmark (Random Forest on Iris dataset)

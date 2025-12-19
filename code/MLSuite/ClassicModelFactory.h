@@ -50,7 +50,7 @@ public:
 
     std::unique_ptr<IModel> createRandomForestModel(int nEstimators, int maxDepth, int minSamplesSplit, bool isClassification = false);
 
-	std::unique_ptr<IModel> createXGBoostModel(int nEstimators = 100, float learningRate = 0.1f, int maxDepth = 3, float subsampleRatio = 1.0f, float gamma = 0.0f, const std::string& regularization = "L2"); // XGBoost 
+	std::unique_ptr<IModel> createXGBoostModel(int nEstimators = 100, float learningRate = 0.1f, int maxDepth = 3, float subsampleRatio = 1.0f, float gamma = 0.0f, const std::string& regularization = "L2", bool isClassification = false); // XGBoost 
 
 private:
 	std::string m_trainFeaturesPath;

@@ -398,7 +398,7 @@ std::unique_ptr<IModel> ClassicModelFactory::createRandomForestModel(int nEstima
         	.build();
 }
 
-std::unique_ptr<IModel> ClassicModelFactory::createXGBoostModel(int nEstimators, float learningRate, int maxDepth, float subsampleRatio, float gamma, const std::string& regularization) {
+std::unique_ptr<IModel> ClassicModelFactory::createXGBoostModel(int nEstimators, float learningRate, int maxDepth, float subsampleRatio, float gamma, const std::string& regularization, bool isClassification) {
     	return XGBoostBuilder()
         	.setNEstimators(nEstimators)
         	.setLearningRate(learningRate)
@@ -406,5 +406,6 @@ std::unique_ptr<IModel> ClassicModelFactory::createXGBoostModel(int nEstimators,
         	.setSubsampleRatio(subsampleRatio)
         	.setGamma(gamma)
         	.setRegularization(regularization)
+	.setIsClassification(isClassification)
         	.build();
 }

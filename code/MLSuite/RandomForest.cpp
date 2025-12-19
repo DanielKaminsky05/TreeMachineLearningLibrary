@@ -6,6 +6,7 @@
 #include <tuple>
 #include <utility>
 #include <limits>
+#include <map>
 
 namespace {
 	double meanOf(const std::vector<double>& v) {
@@ -24,13 +25,15 @@ RandomForest::RandomForest(int Estimators,
                            int minSamplesSplit,
                            int maxFeatures,
                            bool bootstrap,
-                           int randomState)
+                           int randomState,
+                           bool isClassification)
     : nEstimators(Estimators),
     maxDepth(maxDepth),
     minSamplesSplit(minSamplesSplit),
     maxFeatures(maxFeatures),
     bootstrap(bootstrap),
     randomState(randomState),
+    isClassification(isClassification),
     isFitted(false),
     nFeatures(0),
     internalRng(static_cast<std::mt19937::result_type>(randomState)) // seed RNG
@@ -107,7 +110,7 @@ void RandomForest::buildTree(const std::vector<std::vector<double>>& X, const st
     	}
 
     	// Construct a DecisionTree with your API and train it
-    	DecisionTree tree(maxDepth, minSamplesSplit);
+    	DecisionTree tree(maxDepth, minSamplesSplit, isClassification);
     	tree.fit(Xb, Yb);                    // <-- matches your DecisionTree
 
 	trees.push_back(std::move(tree));
@@ -160,7 +163,7 @@ std::vector<double> RandomForest::aggregateMean(const std::vector<double>& preds
     return { meanOf(preds) }; // return the mean of predictions 
 }
 
-double RandomForest::predict(const std::vector<double>& x) {
+double RandomForest::predict(const std::vector<double>& x) const {
 	if (!isFitted) {
         	throw std::logic_error("predict: model is not fitted");
     	}
@@ -169,13 +172,34 @@ double RandomForest::predict(const std::vector<double>& x) {
         	throw std::invalid_argument("predict: input dimension does not match training data");
     	}
 
-    	std::vector<double> perTree;
-    	perTree.reserve(trees.size());
-    	for (auto& tree : trees) {
-		perTree.push_back(tree.predict(x));
-    	}
+        if (!isClassification) {
+            // Regression: Mean
+            std::vector<double> perTree;
+            perTree.reserve(trees.size());
+            for (auto& tree : trees) {
+                perTree.push_back(tree.predict(x));
+            }
+            return meanOf(perTree);
+        } else {
+            // Classification: Majority Vote Logic
+            std::map<int, int> counts;
+            for (auto& tree : trees) {
+                double p = tree.predict(x);
+                int label = static_cast<int>(std::round(p));
+                counts[label]++;
+            }
 
-    	return meanOf(perTree);
+            int bestLabel = -1;
+            int maxCount = -1;
+
+            for (auto const& [label, count] : counts) {
+                if (count > maxCount) {
+                    maxCount = count;
+                    bestLabel = label;
+                }
+            }
+            return static_cast<double>(bestLabel);
+        }
 }
 
 // model benchmarking interface concrete implementations for the strategy pattern.
@@ -195,9 +219,42 @@ void RandomForest::fit(const std::vector<float>& x_values, const std::vector<std
         	throw std::invalid_argument("The size of x_values is not a multiple of the number of columns.");
     	}
 
-    	if (n_rows != y_values.size()) {
-        	throw std::invalid_argument("Number of samples in features and targets do not match.");
-    	}
+        // --- FIXED LOGIC FOR ONE-HOT ENCODED TARGETS ---
+        // If y_values has more elements than rows, it might be one-hot encoded (or multi-variate).
+        // Since the internal model expects a single scalar target per row, we attempt to decode it.
+        std::vector<double> targets_double;
+        targets_double.reserve(n_rows);
+
+        if (y_values.size() > n_rows) {
+            size_t n_target_cols = y_values.size() / n_rows;
+            // Simple check: is it a clean multiple?
+            if (y_values.size() % n_rows == 0 && n_target_cols > 1) {
+                // Assume one-hot/dummy encoding: convert to class index (0, 1, 2...)
+                for (size_t i = 0; i < n_rows; ++i) {
+                    double maxVal = -std::numeric_limits<double>::infinity();
+                    int maxIdx = 0;
+                    for (size_t k = 0; k < n_target_cols; ++k) {
+                        double val = static_cast<double>(y_values[i * n_target_cols + k]);
+                        if (val > maxVal) {
+                            maxVal = val;
+                            maxIdx = static_cast<int>(k);
+                        }
+                    }
+                    targets_double.push_back(static_cast<double>(maxIdx));
+                }
+            } else {
+                 // Fallback or mismatch error
+                throw std::invalid_argument("Number of samples in features and targets do not match (and not valid one-hot).");
+            }
+        } else if (y_values.size() == n_rows) {
+            // 1:1 mapping, standard scalar targets
+             for (float v : y_values) {
+                targets_double.push_back(static_cast<double>(v));
+            }
+        } else {
+             throw std::invalid_argument("Number of targets is less than number of feature rows.");
+        }
+        // -----------------------------------------------
 
     	// Reshape 1D vector to 2D vector and convert to double
     	std::vector<std::vector<double>> features_double(n_rows, std::vector<double>(n_cols));
@@ -206,8 +263,6 @@ void RandomForest::fit(const std::vector<float>& x_values, const std::vector<std
             		features_double[i][j] = static_cast<double>(x_values[i * n_cols + j]);
         	}
     	}
-
-    	std::vector<double> targets_double(y_values.begin(), y_values.end());
 
     	this->fit(features_double, targets_double);
 }
@@ -243,14 +298,8 @@ std::vector<float> RandomForest::predict(const std::vector<float>& x_values, con
             		throw std::invalid_argument("predict: input dimension does not match training data");
         	}
 
-        	std::vector<double> per_tree_predictions;
-        	per_tree_predictions.reserve(trees.size());
-
-        	for (const auto& tree : trees) {
-            		per_tree_predictions.push_back(tree.predict(single_feature_double));
-        	}
-
-        	all_predictions.push_back(static_cast<float>(meanOf(per_tree_predictions)));
+            // Calls the internal predict(std::vector<double>) which handles isClassification check
+            all_predictions.push_back(static_cast<float>(this->predict(single_feature_double)));
     }
 
     return all_predictions;

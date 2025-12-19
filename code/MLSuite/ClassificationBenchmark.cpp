@@ -99,3 +99,26 @@ BenchmarkResult ClassificationBenchmark::execute(const IModel& model,
 
     return result;
 }
+
+double ClassificationBenchmark::evaluate(const IModel& model, 
+                                         const Dataset& features, 
+                                         const Dataset& targets) const {
+    std::vector<float> rawPreds = model.predict(features.get_data(), features.get_columns());
+    const std::vector<float>& actualRaw = targets.get_data();
+
+    if (rawPreds.size() != actualRaw.size()) {
+        std::cerr << "evaluate: Prediction size mismatch." << std::endl;
+        return std::numeric_limits<double>::infinity(); 
+    }
+
+    std::vector<int> actual(actualRaw.size());
+    std::vector<int> predicted(rawPreds.size());
+    for (std::size_t i = 0; i < actualRaw.size(); ++i) {
+        actual[i] = static_cast<int>(std::round(actualRaw[i]));
+        predicted[i] = static_cast<int>(std::round(rawPreds[i]));
+    }
+
+    // Optimization goal: minimize error rate (1.0 - accuracy)
+    double accuracy = computeAccuracy(actual, predicted);
+    return 1.0 - accuracy;
+}

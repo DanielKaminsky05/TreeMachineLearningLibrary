@@ -6,18 +6,27 @@
 #include <random>
 #include <stdexcept>
 
+namespace {
+    // Sigmoid function for binary classification
+    inline double sigmoid(double x) {
+        return 1.0 / (1.0 + std::exp(-x));
+    }
+}
+
 XGBoostModel::XGBoostModel(int nEstimatorsValue,
                            float learningRateValue,
                            int maxDepthValue,
                            float subsampleRatioValue,
                            float gammaValue,
-                           std::string regularizationValue)
+                           std::string regularizationValue,
+                           bool isClassificationValue)
     : nEstimators(nEstimatorsValue),
       learningRate(learningRateValue),
       maxDepth(maxDepthValue),
       subsampleRatio(subsampleRatioValue),
       gamma(gammaValue),
-      regularization(std::move(regularizationValue)) {
+      regularization(std::move(regularizationValue)),
+      isClassification(isClassificationValue) {
 	
 	if (subsampleRatio <= 0.0f || subsampleRatio > 1.0f) {
         	throw std::invalid_argument("subsampleRatio must be in (0, 1].");
@@ -49,17 +58,37 @@ void XGBoostModel::fit(const std::vector<std::vector<double>>& X, const std::vec
     	trees.clear();
     	trees.reserve(static_cast<size_t>(nEstimators));
 
-    	double meanTarget = std::accumulate(Y.begin(), Y.end(), 0.0) / static_cast<double>(sampleCount);
-    	initialBias = meanTarget;
+        if (isClassification) {
+            // For binary classification, initial prediction (logits) is usually 0.0 (prob = 0.5)
+            // or log(mean / (1 - mean)). Let's use 0.0 for simplicity or log-odds of mean.
+            double posCount = 0.0;
+            for(double y : Y) if(y > 0.5) posCount++;
+            double prob = posCount / sampleCount;
+            
+            // Avoid log(0)
+            prob = std::max(1e-6, std::min(1.0 - 1e-6, prob));
+            initialBias = std::log(prob / (1.0 - prob));
+        } else {
+    	    double meanTarget = std::accumulate(Y.begin(), Y.end(), 0.0) / static_cast<double>(sampleCount);
+    	    initialBias = meanTarget;
+        }
 
     	std::vector<double> predictions(sampleCount, initialBias);
     	std::vector<double> residuals(sampleCount);
 	
-	std::mt19937 rng(42);
+	    std::mt19937 rng(42);
 
     	for (int treeIndex = 0; treeIndex < nEstimators; ++treeIndex) {
         	for (size_t i = 0; i < sampleCount; ++i) {
+                if (isClassification) {
+                    // For Log Loss: Gradient = y - sigmoid(pred)
+                    // We fit the tree to these gradients. 
+                    double prob = sigmoid(predictions[i]);
+                    residuals[i] = Y[i] - prob; 
+                } else {
+                    // For MSE: Gradient = y - pred
             		residuals[i] = Y[i] - predictions[i];
+                }
         	}
 
         	std::vector<size_t> indices(sampleCount);
@@ -80,7 +109,8 @@ void XGBoostModel::fit(const std::vector<std::vector<double>>& X, const std::vec
             		residualSubset.push_back(residuals[rowIndex]);
         	}
 
-        	DecisionTree tree(maxDepth);
+        	// Note: We always use Regression Trees (isClassification=false) to fit residuals/gradients
+            DecisionTree tree(maxDepth, 2, false); 
         	tree.fit(featureSubset, residualSubset);
         	trees.push_back(std::move(tree));
 
@@ -103,6 +133,14 @@ double XGBoostModel::predict(const std::vector<double>& input) const {
         	score += static_cast<double>(learningRate) * tree.predict(input);
     	}
 
+        if (isClassification) {
+            // Return probability or class? 
+            // Usually predict() returns class labels for consistency with IModel interface 
+            // if we follow the pattern in RandomForest.
+            double prob = sigmoid(score);
+            return (prob >= 0.5) ? 1.0 : 0.0;
+        }
+
     	return score;
 }
 
@@ -123,19 +161,24 @@ void XGBoostModel::fit(const std::vector<float>& x_values, const std::vector<std
 
     	const size_t rowCount = x_values.size() / columnCount;
 
-    	if (rowCount != y_values.size()) {
-        	throw std::invalid_argument("Feature rows must match target size.");
-    	}
-
-    	std::vector<std::vector<double>> features(rowCount, std::vector<double>(columnCount));
-    	for (size_t i = 0; i < rowCount; ++i) {
-        	for (size_t j = 0; j < columnCount; ++j) {
+        // Check for 1:1 mapping first
+        if (y_values.size() == rowCount) {
+             std::vector<std::vector<double>> features(rowCount, std::vector<double>(columnCount));
+    	     for (size_t i = 0; i < rowCount; ++i) {
+        	    for (size_t j = 0; j < columnCount; ++j) {
             		features[i][j] = static_cast<double>(x_values[i * columnCount + j]);
-        	}
-    	}
+        	    }
+    	     }
+    	     std::vector<double> targets(y_values.begin(), y_values.end());
+    	     fit(features, targets);
+             return;
+        }
 
-    	std::vector<double> targets(y_values.begin(), y_values.end());
-    	fit(features, targets);
+        // Handle possible one-hot encoding or mismatch
+        // Similar logic to RandomForest if needed, but for now strict check:
+    	if (rowCount != y_values.size()) {
+        	throw std::invalid_argument("Feature rows must match target size (XGBoost only supports single-output regression/binary classification).");
+    	}
 }
 
 std::vector<float> XGBoostModel::predict(const std::vector<float>& x_values, const std::vector<std::string>& columns) const {

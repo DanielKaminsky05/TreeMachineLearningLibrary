@@ -11,6 +11,7 @@ using std::endl;
 // using declarations for reading files
 using std::ifstream;
 using std::stringstream;
+using std::to_string;
 
 
 /* NOTE: Dataset strategy: store a contiguous 1D vector in memory for fast access, separate metadata from the data. 
@@ -37,6 +38,36 @@ Dataset::Dataset(string path, string data_type) : file_path(path), type(data_typ
 	} catch (...) {
 		cerr << "Unknown error" << endl;
 	}
+}
+
+Dataset::Dataset(const std::vector<std::vector<float>>& features, const std::vector<float>& targets) {
+    type = "in-memory";
+    data.clear();
+    columns.clear();
+
+    if (!features.empty()) {
+        // Assume this is a feature dataset
+        size_t n_rows = features.size();
+        size_t n_cols = features[0].size();
+
+        // Generate dummy column names
+        for (size_t j = 0; j < n_cols; ++j) {
+            columns.push_back(to_string(j));
+        }
+
+        // Flatten data
+        data.reserve(n_rows * n_cols);
+        for (const auto& row : features) {
+            if (row.size() != n_cols) {
+                throw std::invalid_argument("Inconsistent feature row sizes");
+            }
+            data.insert(data.end(), row.begin(), row.end());
+        }
+    } else if (!targets.empty()) {
+        // Assume this is a target dataset
+        columns.push_back("target");
+        data = targets;
+    }
 }
 
 void Dataset::read_csv(string path) {
@@ -94,6 +125,27 @@ const vector<string>& Dataset::get_columns() const {
 	return columns;
 }
 
+std::vector<std::vector<double>> Dataset::get_data_as_double_2d() const {
+    size_t n_cols = columns.size();
+    if (n_cols == 0) return {};
+    size_t n_rows = data.size() / n_cols;
+    
+    std::vector<std::vector<double>> out(n_rows, std::vector<double>(n_cols));
+    for(size_t i=0; i<n_rows; ++i) {
+        for(size_t j=0; j<n_cols; ++j) {
+            out[i][j] = static_cast<double>(data[i*n_cols + j]);
+        }
+    }
+    return out;
+}
+
+std::vector<double> Dataset::get_data_as_double_1d() const {
+    std::vector<double> out(data.size());
+    for(size_t i=0; i<data.size(); ++i) {
+        out[i] = static_cast<double>(data[i]);
+    }
+    return out;
+}
 
 
 void Dataset::set_data(vector<float> new_data, vector<string> new_cols) { // getter method for the data 

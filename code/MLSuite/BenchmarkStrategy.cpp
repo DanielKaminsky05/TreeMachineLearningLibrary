@@ -1,11 +1,27 @@
 #include "BenchmarkStrategy.h"
 #include <chrono>
 #include <cstddef>
+#include <iostream>
 
 #ifdef _WIN32
     #include <windows.h>
     #include <psapi.h>
 #endif
+
+// Implement the trainAndExecute orchestration method
+BenchmarkResult BenchmarkStrategy::trainAndExecute(IModel& model,
+                                                   const Dataset& trainFeatures,
+                                                   const Dataset& trainTargets,
+                                                   const Dataset& testFeatures,
+                                                   const Dataset& testTargets) const {
+    std::cout << "\n--- Benchmarking " << model.getName() << " ---" << std::endl;
+    const auto start = std::chrono::high_resolution_clock::now();
+    model.fit(trainFeatures.get_data(), trainFeatures.get_columns(), trainTargets.get_data());
+    const auto end = std::chrono::high_resolution_clock::now();
+    
+    double fitMillis = millisBetween(start, end);
+    return execute(model, testFeatures, testTargets, fitMillis);
+}
 
 double currentMemoryUsageBytes() {
 #ifdef _WIN32

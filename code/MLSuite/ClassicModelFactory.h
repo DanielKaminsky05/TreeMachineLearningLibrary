@@ -4,6 +4,7 @@
 #include "Dataset.h"
 #include "HyperparameterSearch.h"
 #include "IModel.h"
+#include "BenchmarkStrategy.h"
 #include <memory>
 #include <string>
 
@@ -42,13 +43,15 @@ public:
 		const std::string& modelType,
         const std::vector<std::vector<std::string>>& hyperParams,
         const std::vector<std::vector<double>>& X,
-        const std::vector<double>& y) override;
+        const std::vector<double>& y,
+        const BenchmarkStrategy& evaluationStrategy) override;
 
 	std::unique_ptr<IModel> createLinRegModel(); // linreg 
+	std::unique_ptr<IModel> createLogRegModel();
 
-	std::unique_ptr<IModel> createRandomForestModel(int nEstimators = 100, int maxDepth = 10, int minSamplesSplit = 2); // random forest
+    std::unique_ptr<IModel> createRandomForestModel(int nEstimators, int maxDepth, int minSamplesSplit, bool isClassification = false);
 
-	std::unique_ptr<IModel> createXGBoostModel(int nEstimators = 100, float learningRate = 0.1f, int maxDepth = 3, float subsampleRatio = 1.0f, float gamma = 0.0f, const std::string& regularization = "L2"); // XGBoost 
+	std::unique_ptr<IModel> createXGBoostModel(int nEstimators = 100, float learningRate = 0.1f, int maxDepth = 3, float subsampleRatio = 1.0f, float gamma = 0.0f, const std::string& regularization = "L2", bool isClassification = false); // XGBoost 
 
 private:
 	std::string m_trainFeaturesPath;

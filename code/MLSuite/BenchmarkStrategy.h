@@ -36,6 +36,20 @@ public:
                                     const Dataset& xData,
                                     const Dataset& yData,
                                     double fitMillis = 0.0) const = 0;
+
+    // Evaluates the model and returns a "loss" score (lower is better).
+    // For Regression: Returns MSE.
+    // For Classification: Returns (1.0 - Accuracy), i.e., Error Rate.
+    virtual double evaluate(const IModel& model, 
+                            const Dataset& features, 
+                            const Dataset& targets) const = 0;
+
+    // Orchestrates training (fit), timing, and executing the benchmark.
+    BenchmarkResult trainAndExecute(IModel& model,
+                                    const Dataset& trainFeatures,
+                                    const Dataset& trainTargets,
+                                    const Dataset& testFeatures,
+                                    const Dataset& testTargets) const;
 };
 
 // Shared helpers for timing and memory snapshots.

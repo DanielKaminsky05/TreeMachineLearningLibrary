@@ -2,10 +2,12 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
+#include <map>
 
-DecisionTree::DecisionTree(int maxDepth, int minSampleSplit): 
+DecisionTree::DecisionTree(int maxDepth, int minSampleSplit, bool isClassification): 
 	maxDepth(maxDepth),
     	minSampleSplit(minSampleSplit),
+        isClassification(isClassification),
     	nNodes(0),
     	nFeatures(0),
     	isFitted(false) {}
@@ -30,16 +32,42 @@ double DecisionTree::computeMSE(int n, double sum, double sum2) {
     	return (sum2 / n) - (mean * mean);
 }
 
+double DecisionTree::computeGini(const std::vector<int>& indices, const std::vector<double>& Y) {
+    if (indices.empty()) return 0.0;
+    std::map<double, int> counts;
+    for (int idx : indices) {
+        counts[Y[idx]]++;
+    }
+    double n = static_cast<double>(indices.size());
+    double sumSq = 0.0;
+    for (auto const& [label, count] : counts) {
+        double p = count / n;
+        sumSq += p * p;
+    }
+    return 1.0 - sumSq;
+}
+
 double DecisionTree::impurityDecrease(int nP, double sumP, double sumP2,
 				      int nL, double sumL, double sumL2,
-                                      int nR, double sumR, double sumR2) {
+                                      int nR, double sumR, double sumR2,
+                                      const std::vector<int>& indicesP,
+                                      const std::vector<int>& indicesL,
+                                      const std::vector<int>& indicesR,
+                                      const std::vector<double>& Y) {
 	if (nL == 0 || nR == 0) return 0.0;
+    
+    if (isClassification) {
+        double parentImp = computeGini(indicesP, Y);
+        double leftImp   = computeGini(indicesL, Y);
+        double rightImp  = computeGini(indicesR, Y);
+        return parentImp - ( (static_cast<double>(nL) * leftImp + static_cast<double>(nR) * rightImp) / static_cast<double>(nP) );
+    } else {
     	double parentImp = computeMSE(nP, sumP, sumP2);
     	double leftImp   = computeMSE(nL, sumL, sumL2);
     	double rightImp  = computeMSE(nR, sumR, sumR2);
-	
     	// Weighted decrease
-    	return parentImp - ( (nL * leftImp + nR * rightImp) / nP );
+    	return parentImp - ( (static_cast<double>(nL) * leftImp + static_cast<double>(nR) * rightImp) / static_cast<double>(nP) );
+    }
 }
 
 std::tuple<std::vector<int>, std::vector<int>>
@@ -61,17 +89,38 @@ DecisionTree::partitionByThreshold(const std::vector<std::vector<double>>& X,
 void DecisionTree::makeLeaf(int nodeIndex,
                             const std::vector<int>& indices,
                             const std::vector<double>& Y) {
-	// Mean of Y at this node
-	double s = 0.0;
-	for (int i : indices) s += Y[i];
-	double mean = indices.empty() ? 0.0 : s / indices.size();
+    if (indices.empty()) {
+        isLeaf[nodeIndex] = true;
+        value[nodeIndex] = 0.0;
+        return;
+    }
+
+    if (isClassification) {
+        // Mode (majority vote)
+        std::map<double, int> counts;
+        for (int i : indices) counts[Y[i]]++;
+        double bestLabel = Y[indices[0]];
+        int maxCount = -1;
+        for (auto const& [label, count] : counts) {
+            if (count > maxCount) {
+                maxCount = count;
+                bestLabel = label;
+            }
+        }
+        value[nodeIndex] = bestLabel;
+    } else {
+	    // Mean of Y at this node
+	    double s = 0.0;
+	    for (int i : indices) s += Y[i];
+	    double mean = s / indices.size();
+        value[nodeIndex] = mean;
+    }
 
     	isLeaf[nodeIndex] = true;
     	feature[nodeIndex] = -1;
     	threshold[nodeIndex] = 0.0;
     	left[nodeIndex] = -1;
     	right[nodeIndex] = -1;
-    	value[nodeIndex] = mean;
 }
 
 std::tuple<int, double, double, std::vector<int>, std::vector<int>>
@@ -85,13 +134,15 @@ DecisionTree::bestSplit(const std::vector<std::vector<double>>& X,
         	return {-1, 0.0, 0.0, {}, {}};
     	}
 
-    	// Precompute parent sums
+    	// Precompute parent values
     	double sumP = 0.0, sumP2 = 0.0;
-    	for (int i : indices) {
-        	double y = Y[i];
-        	sumP += y;
-        	sumP2 += y * y;
-    	}
+        if (!isClassification) {
+    	    for (int i : indices) {
+        	    double y = Y[i];
+        	    sumP += y;
+        	    sumP2 += y * y;
+    	    }
+        }
 
     	double bestGain = 0.0;
     	int bestFeat = -1;
@@ -110,7 +161,7 @@ DecisionTree::bestSplit(const std::vector<std::vector<double>>& X,
                       return std::get<0>(a) < std::get<0>(b);
                   });
 
-        	// Prefix sums for left, suffix via totals for right
+        	// Prefix values for left, suffix via totals for right
         	double sumL = 0.0, sumL2 = 0.0;
         	int nL = 0;
 
@@ -137,22 +188,22 @@ DecisionTree::bestSplit(const std::vector<std::vector<double>>& X,
             	// Threshold midway between x_s and x_next
             	double thr = 0.5 * (x_s + x_next);
 
-            	double gain = impurityDecrease(n, sumP, sumP2, nL, sumL, sumL2, nR, sumR, sumR2);
+                // Materialize index partitions for impurityDecrease if needed
+                // For performance, we could optimize this, but for now let's be correct.
+                std::vector<int> L; L.reserve(nL);
+                std::vector<int> R; R.reserve(nR);
+                for (int k = 0; k <= s; ++k) L.push_back(std::get<2>(rows[k]));
+                for (int k = s+1; k < n; ++k) R.push_back(std::get<2>(rows[k]));
+
+            	double gain = impurityDecrease(n, sumP, sumP2, nL, sumL, sumL2, nR, sumR, sumR2, indices, L, R, Y);
 
             	if (gain > bestGain) {
                 	bestGain = gain;
                 	bestFeat = f;
                 	bestThr = thr;
-
-                // Materialize index partitions
-                std::vector<int> L; L.reserve(nL);
-                std::vector<int> R; R.reserve(nR);
-                for (int k = 0; k <= s; ++k) L.push_back(std::get<2>(rows[k]));
-                for (int k = s+1; k < n; ++k) R.push_back(std::get<2>(rows[k]));
-                bestL.swap(L);
-                bestR.swap(R);
-
-			}
+                    bestL.swap(L);
+                    bestR.swap(R);
+			    }
         	}
 	}
 

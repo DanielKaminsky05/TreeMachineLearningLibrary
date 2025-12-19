@@ -22,6 +22,8 @@ public:
 	// constructor for loading dataset from a file 
 	Dataset(std::string path, std::string data_type);
 
+    // constructor for creating dataset from in-memory vectors
+    Dataset(const std::vector<std::vector<float>>& features, const std::vector<float>& targets);
 	
 	// getters 
 	const std::vector<float>& get_data() const;
@@ -31,6 +33,10 @@ public:
 
 	// helper method for reading csv 
 	void read_csv(std::string path);
+
+    // Helpers to export data as double for specific use cases (like RandomSearch)
+    std::vector<std::vector<double>> get_data_as_double_2d() const;
+    std::vector<double> get_data_as_double_1d() const;
 
 	// setters 
 	void set_path(std::string new_path); 

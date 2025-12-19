@@ -85,3 +85,20 @@ BenchmarkResult RegressionBenchmark::execute(const IModel& model,
 
     return result;
 }
+
+double RegressionBenchmark::evaluate(const IModel& model, 
+                                     const Dataset& features, 
+                                     const Dataset& targets) const {
+    // Reuses the local calculateMSE helper.
+    // Predict
+    std::vector<float> predictions = model.predict(features.get_data(), features.get_columns());
+    const std::vector<float>& actual = targets.get_data();
+
+    // Check sizes
+    if (predictions.size() != actual.size()) {
+        std::cerr << "evaluate: Prediction size mismatch." << std::endl;
+        return std::numeric_limits<double>::infinity(); 
+    }
+
+    return calculateMSE(actual, predictions);
+}

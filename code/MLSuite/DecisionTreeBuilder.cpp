@@ -2,7 +2,7 @@
 #include <stdexcept> // For std::invalid_argument
 
 DecisionTreeBuilder::DecisionTreeBuilder() 
-    : mMaxDepth(10), mMinSamplesSplit(2) {}
+    : mMaxDepth(10), mMinSamplesSplit(2), mIsClassification(false) {}
 
 DecisionTreeBuilder& DecisionTreeBuilder::setMaxDepth(int maxDepth) {
     if (maxDepth <= 0) {
@@ -20,6 +20,11 @@ DecisionTreeBuilder& DecisionTreeBuilder::setMinSamplesSplit(int minSamplesSplit
     return *this;
 }
 
+DecisionTreeBuilder& DecisionTreeBuilder::setIsClassification(bool isClassification) {
+    mIsClassification = isClassification;
+    return *this;
+}
+
 std::unique_ptr<DecisionTree> DecisionTreeBuilder::build() {
-    return std::make_unique<DecisionTree>(mMaxDepth, mMinSamplesSplit);
+    return std::make_unique<DecisionTree>(mMaxDepth, mMinSamplesSplit, mIsClassification);
 }

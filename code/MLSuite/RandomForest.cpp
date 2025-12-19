@@ -110,7 +110,7 @@ void RandomForest::buildTree(const std::vector<std::vector<double>>& X, const st
     	}
 
     	// Construct a DecisionTree with your API and train it
-    	DecisionTree tree(maxDepth, minSamplesSplit);
+    	DecisionTree tree(maxDepth, minSamplesSplit, isClassification);
     	tree.fit(Xb, Yb);                    // <-- matches your DecisionTree
 
 	trees.push_back(std::move(tree));

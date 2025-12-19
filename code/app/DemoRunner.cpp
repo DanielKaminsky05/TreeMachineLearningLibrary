@@ -1,4 +1,4 @@
-#include "code/app/DemoRunner.h"
+#include "DemoRunner.h"
 
 #include <chrono>
 #include <iomanip>
@@ -7,12 +7,12 @@
 #include <sstream>
 #include <vector>
 
-#include "code/MLSuite/BenchmarkStrategy.h"
-#include "code/MLSuite/ClassicModelFactory.h"
-#include "code/MLSuite/ClassificationBenchmark.h"
-#include "code/MLSuite/Dataset.h"
-#include "code/MLSuite/IModel.h"
-#include "code/MLSuite/RegressionBenchmark.h"
+#include "../MLSuite/BenchmarkStrategy.h"
+#include "../MLSuite/ClassicModelFactory.h"
+#include "../MLSuite/ClassificationBenchmark.h"
+#include "../MLSuite/Dataset.h"
+#include "../MLSuite/IModel.h"
+#include "../MLSuite/RegressionBenchmark.h"
 
 namespace {
 void logLine(const DemoRunner::LogFn& log, const std::string& line) {

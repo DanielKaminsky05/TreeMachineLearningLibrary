@@ -43,6 +43,13 @@ public:
     virtual double evaluate(const IModel& model, 
                             const Dataset& features, 
                             const Dataset& targets) const = 0;
+
+    // Orchestrates training (fit), timing, and executing the benchmark.
+    BenchmarkResult trainAndExecute(IModel& model,
+                                    const Dataset& trainFeatures,
+                                    const Dataset& trainTargets,
+                                    const Dataset& testFeatures,
+                                    const Dataset& testTargets) const;
 };
 
 // Shared helpers for timing and memory snapshots.

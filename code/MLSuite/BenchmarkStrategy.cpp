@@ -7,6 +7,20 @@
     #include <psapi.h>
 #endif
 
+// Implement the trainAndExecute orchestration method
+BenchmarkResult BenchmarkStrategy::trainAndExecute(IModel& model,
+                                                   const Dataset& trainFeatures,
+                                                   const Dataset& trainTargets,
+                                                   const Dataset& testFeatures,
+                                                   const Dataset& testTargets) const {
+    const auto start = std::chrono::high_resolution_clock::now();
+    model.fit(trainFeatures.get_data(), trainFeatures.get_columns(), trainTargets.get_data());
+    const auto end = std::chrono::high_resolution_clock::now();
+    
+    double fitMillis = millisBetween(start, end);
+    return execute(model, testFeatures, testTargets, fitMillis);
+}
+
 double currentMemoryUsageBytes() {
 #ifdef _WIN32
     PROCESS_MEMORY_COUNTERS pmc;

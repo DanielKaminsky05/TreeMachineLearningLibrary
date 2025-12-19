@@ -1,5 +1,6 @@
 #include "ClassicModelFactory.h"
 // #include "LinRegModel.h"
+#include "RegressionBenchmark.h" // NOTE: this is a temp fix.
 #include "RandomForestBuilder.h"
 #include "LinearRegressionBuilder.h" // Include the builder header
 #include "XGBoostBuilder.h"
@@ -28,24 +29,7 @@ void ensureTypeValid(const std::string& type, const char* label) {
 	}
 }
 
-// Helper to compute Mean Squared Error (MSE) for models that expose:
-//   double predict(const std::vector<double>&)
-template <typename ModelT>
-double computeMSE(ModelT& model,
-                  const std::vector<std::vector<double>>& X,
-                  const std::vector<double>& y) {
-	if (X.empty() || y.empty() || X.size() != y.size()) {
-		throw std::invalid_argument("computeMSE: X and y must be non-empty and have matching sizes.");
-	}
 
-	double sumSq = 0.0;
-	for (std::size_t i = 0; i < X.size(); ++i) {
-		double pred = model.predict(X[i]);
-		double diff = pred - y[i];
-		sumSq += diff * diff;
-	}
-	return sumSq / static_cast<double>(X.size());
-}
 
 // Utility to pick a random element from a vector of strings
 const std::string& pickRandom(const std::vector<std::string>& values, std::mt19937& rng) {
@@ -143,11 +127,24 @@ void ClassicModelFactory::fitModel(IModel& model) const {
 	model.fit(features.get_data(), features.get_columns(), targets.get_data());
 }
 
+// Override: defaults to Regression strategy
 std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 	const std::string& modelType,
-        const std::vector<std::vector<std::string>>& hyperParams,
-        const std::vector<std::vector<double>>& X,
-        const std::vector<double>& y) {
+    const std::vector<std::vector<std::string>>& hyperParams,
+    const std::vector<std::vector<double>>& X,
+    const std::vector<double>& y) {
+    
+    RegressionBenchmark defaultStrategy; // Use a default RegressionBenchmark
+    return randomSearch(modelType, hyperParams, X, y, defaultStrategy);
+}
+
+// Overload: accepts custom strategy
+std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
+	const std::string& modelType,
+    const std::vector<std::vector<std::string>>& hyperParams,
+    const std::vector<std::vector<double>>& X,
+    const std::vector<double>& y,
+    const BenchmarkStrategy& evaluationStrategy) {
 
 	if (X.empty() || y.empty() || X.size() != y.size()) {
 		throw std::invalid_argument("randomSearch: X and y must be non-empty and have matching sizes.");
@@ -171,7 +168,7 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
     std::iota(indices.begin(), indices.end(), 0);
     std::shuffle(indices.begin(), indices.end(), rng);
 
-	double bestAvgMSE = std::numeric_limits<double>::infinity();
+	double bestScore = std::numeric_limits<double>::infinity(); // Assuming lower is better (Loss/Error)
 	std::unique_ptr<IModel> bestModel;
 
     // Parameters to store the best configuration found
@@ -189,6 +186,19 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
     std::string bestXGB_regularization;
 
     bool foundAny = false;
+
+    // Helper to convert double vectors to float vectors for Dataset compatibility
+    auto doubleToFloat1D = [](const std::vector<double>& v) {
+         return std::vector<float>(v.begin(), v.end());
+    };
+    auto doubleToFloat2D = [](const std::vector<std::vector<double>>& v) {
+        std::vector<std::vector<float>> out;
+        out.reserve(v.size());
+        for(const auto& row : v) {
+            out.emplace_back(row.begin(), row.end());
+        }
+        return out;
+    };
 
 	if (modelType == "RandomForest") {
 		// Expected order:
@@ -210,7 +220,7 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 			int maxDepth        = std::stoi(pickRandom(maxDepthVals, rng));
 			int minSamplesSplit = std::stoi(pickRandom(minSamplesSplitVals, rng));
 
-            double totalMSE = 0.0;
+            double totalScore = 0.0;
 
             // K-Fold Loop
             for (int k = 0; k < kFolds; ++k) {
@@ -244,13 +254,18 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
                     .build();
 
                 rf->fit(trainX, trainY);
-                totalMSE += computeMSE(*rf, valX, valY);
+                
+                // Construct datasets for evaluation
+                Dataset valXData(doubleToFloat2D(valX), {});
+                Dataset valYData({}, doubleToFloat1D(valY));
+
+                totalScore += evaluationStrategy.evaluate(*rf, valXData, valYData);
             }
 
-            double avgMSE = totalMSE / kFolds;
+            double avgScore = totalScore / kFolds;
 
-			if (avgMSE < bestAvgMSE) {
-				bestAvgMSE = avgMSE;
+			if (avgScore < bestScore) {
+				bestScore = avgScore;
                 bestRF_nEstimators = nEstimators;
                 bestRF_maxDepth = maxDepth;
                 bestRF_minSamplesSplit = minSamplesSplit;
@@ -298,7 +313,7 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 			float gamma            = std::stof(pickRandom(gammaVals, rng));
 			std::string regularization = pickRandom(regularizationVals, rng);
 
-            double totalMSE = 0.0;
+            double totalScore = 0.0;
 
             // K-Fold Loop
             for (int k = 0; k < kFolds; ++k) {
@@ -334,13 +349,18 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
                     .build();
 
                 xgb->fit(trainX, trainY);
-                totalMSE += computeMSE(*xgb, valX, valY);
+                
+                // Construct datasets for evaluation
+                Dataset valXData(doubleToFloat2D(valX), {});
+                Dataset valYData({}, doubleToFloat1D(valY));
+
+                totalScore += evaluationStrategy.evaluate(*xgb, valXData, valYData);
             }
 
-            double avgMSE = totalMSE / kFolds;
+            double avgScore = totalScore / kFolds;
 
-			if (avgMSE < bestAvgMSE) {
-				bestAvgMSE = avgMSE;
+			if (avgScore < bestScore) {
+				bestScore = avgScore;
                 bestXGB_nEstimators = nEstimators;
                 bestXGB_learningRate = learningRate;
                 bestXGB_maxDepth = maxDepth;

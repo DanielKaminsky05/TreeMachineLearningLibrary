@@ -9,6 +9,10 @@ public:
                             const Dataset& xData,
                             const Dataset& yData,
                             double fitMillis = 0.0) const override;
+
+    double evaluate(const IModel& model, 
+                    const Dataset& features, 
+                    const Dataset& targets) const override;
 };
 
 #endif // CLASSIFICATIONBENCHMARK_H

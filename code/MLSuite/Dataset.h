@@ -22,6 +22,8 @@ public:
 	// constructor for loading dataset from a file 
 	Dataset(std::string path, std::string data_type);
 
+    // constructor for creating dataset from in-memory vectors
+    Dataset(const std::vector<std::vector<float>>& features, const std::vector<float>& targets);
 	
 	// getters 
 	const std::vector<float>& get_data() const;

@@ -11,6 +11,7 @@ using std::endl;
 // using declarations for reading files
 using std::ifstream;
 using std::stringstream;
+using std::to_string;
 
 
 /* NOTE: Dataset strategy: store a contiguous 1D vector in memory for fast access, separate metadata from the data. 
@@ -37,6 +38,36 @@ Dataset::Dataset(string path, string data_type) : file_path(path), type(data_typ
 	} catch (...) {
 		cerr << "Unknown error" << endl;
 	}
+}
+
+Dataset::Dataset(const std::vector<std::vector<float>>& features, const std::vector<float>& targets) {
+    type = "in-memory";
+    data.clear();
+    columns.clear();
+
+    if (!features.empty()) {
+        // Assume this is a feature dataset
+        size_t n_rows = features.size();
+        size_t n_cols = features[0].size();
+
+        // Generate dummy column names
+        for (size_t j = 0; j < n_cols; ++j) {
+            columns.push_back(to_string(j));
+        }
+
+        // Flatten data
+        data.reserve(n_rows * n_cols);
+        for (const auto& row : features) {
+            if (row.size() != n_cols) {
+                throw std::invalid_argument("Inconsistent feature row sizes");
+            }
+            data.insert(data.end(), row.begin(), row.end());
+        }
+    } else if (!targets.empty()) {
+        // Assume this is a target dataset
+        columns.push_back("target");
+        data = targets;
+    }
 }
 
 void Dataset::read_csv(string path) {

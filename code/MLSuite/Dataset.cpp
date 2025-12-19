@@ -125,6 +125,27 @@ const vector<string>& Dataset::get_columns() const {
 	return columns;
 }
 
+std::vector<std::vector<double>> Dataset::get_data_as_double_2d() const {
+    size_t n_cols = columns.size();
+    if (n_cols == 0) return {};
+    size_t n_rows = data.size() / n_cols;
+    
+    std::vector<std::vector<double>> out(n_rows, std::vector<double>(n_cols));
+    for(size_t i=0; i<n_rows; ++i) {
+        for(size_t j=0; j<n_cols; ++j) {
+            out[i][j] = static_cast<double>(data[i*n_cols + j]);
+        }
+    }
+    return out;
+}
+
+std::vector<double> Dataset::get_data_as_double_1d() const {
+    std::vector<double> out(data.size());
+    for(size_t i=0; i<data.size(); ++i) {
+        out[i] = static_cast<double>(data[i]);
+    }
+    return out;
+}
 
 
 void Dataset::set_data(vector<float> new_data, vector<string> new_cols) { // getter method for the data 

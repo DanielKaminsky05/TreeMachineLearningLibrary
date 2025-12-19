@@ -1,6 +1,7 @@
 #include "BenchmarkStrategy.h"
 #include <chrono>
 #include <cstddef>
+#include <iostream>
 
 #ifdef _WIN32
     #include <windows.h>
@@ -13,6 +14,7 @@ BenchmarkResult BenchmarkStrategy::trainAndExecute(IModel& model,
                                                    const Dataset& trainTargets,
                                                    const Dataset& testFeatures,
                                                    const Dataset& testTargets) const {
+    std::cout << "\n--- Benchmarking " << model.getName() << " ---" << std::endl;
     const auto start = std::chrono::high_resolution_clock::now();
     model.fit(trainFeatures.get_data(), trainFeatures.get_columns(), trainTargets.get_data());
     const auto end = std::chrono::high_resolution_clock::now();

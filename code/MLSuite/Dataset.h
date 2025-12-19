@@ -34,6 +34,10 @@ public:
 	// helper method for reading csv 
 	void read_csv(std::string path);
 
+    // Helpers to export data as double for specific use cases (like RandomSearch)
+    std::vector<std::vector<double>> get_data_as_double_2d() const;
+    std::vector<double> get_data_as_double_1d() const;
+
 	// setters 
 	void set_path(std::string new_path); 
 	void set_data(std::vector<float> new_data, std::vector<std::string> new_cols);

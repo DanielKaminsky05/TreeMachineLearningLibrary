@@ -375,7 +375,7 @@ std::unique_ptr<IModel> ClassicModelFactory::createLinRegModel() {
 }
 
 // you cannot return a random forest that is unfitted, so it will build and fit the model in one go.
-std::unique_ptr<IModel> ClassicModelFactory::createRandomForestModel(int nEstimators, int maxDepth, int minSamplesSplit) {
+std::unique_ptr<IModel> ClassicModelFactory::createRandomForestModel(int nEstimators, int maxDepth, int minSamplesSplit, bool isClassification) {
 	return RandomForestBuilder()
 		.setEstimators(nEstimators)
         	.setMaxDepth(maxDepth)
@@ -383,6 +383,7 @@ std::unique_ptr<IModel> ClassicModelFactory::createRandomForestModel(int nEstima
         	.setMaxFeatures(0) 
         	.setBootstrap(true)
 		.setRandomState(0)
+            .setIsClassification(isClassification)
         	.build();
 }
 

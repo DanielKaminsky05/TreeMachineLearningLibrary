@@ -6,23 +6,24 @@
 
 class RandomForestBuilder {
 public:
-	RandomForestBuilder();
-	RandomForestBuilder& setEstimators(int estimators);
-    	RandomForestBuilder& setMaxDepth(int maxDepth);
-    	RandomForestBuilder& setMinSamplesSplit(int minSamplesSplit);
-    	RandomForestBuilder& setMaxFeatures(int maxFeatures);
-    	RandomForestBuilder& setBootstrap(bool bootstrap);
-    	RandomForestBuilder& setRandomState(int randomState);
+    RandomForestBuilder();
+    RandomForestBuilder& setEstimators(int estimators);
+    RandomForestBuilder& setMaxDepth(int maxDepth);
+    RandomForestBuilder& setMinSamplesSplit(int minSamplesSplit);
+    RandomForestBuilder& setMaxFeatures(int maxFeatures);
+    RandomForestBuilder& setBootstrap(bool bootstrap);
+    RandomForestBuilder& setRandomState(int randomState);
+    RandomForestBuilder& setIsClassification(bool isClassification); // New setter
 
-    	std::unique_ptr<RandomForest> build();
+    std::unique_ptr<RandomForest> build();
 
 private:
-    	int nEstimators;
-    	int mMaxDepth;
-    	int mMinSamplesSplit;
-    	int mMaxFeatures;
-    	bool mBootstrap;
-    	int mRandomState;
+    int nEstimators;
+    int mMaxDepth;
+    int mMinSamplesSplit;
+    int mMaxFeatures;
+    bool mBootstrap;
+    int mRandomState;
+    bool mIsClassification; // New member
 };
-
 #endif // RANDOMFORESTBUILDER_H

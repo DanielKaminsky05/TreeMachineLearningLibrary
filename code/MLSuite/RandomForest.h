@@ -8,9 +8,9 @@
 
 class RandomForest : public IModel {
     public:
-        RandomForest(int Estimators, int maxDepth, int minSamplesSplit, int maxFeatures, bool bootstrap, int randomState);
+        RandomForest(int Estimators, int maxDepth, int minSamplesSplit, int maxFeatures, bool bootstrap, int randomState, bool isClassification = false);
         void fit(const std::vector<std::vector<double>>& X, const std::vector<double>& Y);
-        double predict(const std::vector<double>& X);
+        double predict(const std::vector<double>& X) const;
         std::vector<DecisionTree> getTrees() {return trees;};
 
 	// IModel interface methods
@@ -24,6 +24,7 @@ class RandomForest : public IModel {
         int maxFeatures;
         bool bootstrap;
         int randomState;
+        bool isClassification;
         bool isFitted = false;
         int nFeatures = 0;
         std::vector<DecisionTree> trees;

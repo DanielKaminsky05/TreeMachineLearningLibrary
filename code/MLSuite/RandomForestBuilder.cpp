@@ -6,7 +6,8 @@ RandomForestBuilder::RandomForestBuilder()
       mMinSamplesSplit(2),
       mMaxFeatures(0),
       mBootstrap(true),
-      mRandomState(0) {} // random forest builder constructor 
+      mRandomState(0),
+      mIsClassification(false) {} // random forest builder constructor 
 
 RandomForestBuilder& RandomForestBuilder::setEstimators(int estimators) {
 	nEstimators = estimators;
@@ -38,6 +39,11 @@ RandomForestBuilder& RandomForestBuilder::setRandomState(int randomState) {
     	return *this;
 }
 
+RandomForestBuilder& RandomForestBuilder::setIsClassification(bool isClassification) {
+    	mIsClassification = isClassification;
+    	return *this;
+}
+
 std::unique_ptr<RandomForest> RandomForestBuilder::build() {
-    	return std::make_unique<RandomForest>(nEstimators, mMaxDepth, mMinSamplesSplit, mMaxFeatures, mBootstrap, mRandomState);
+    	return std::make_unique<RandomForest>(nEstimators, mMaxDepth, mMinSamplesSplit, mMaxFeatures, mBootstrap, mRandomState, mIsClassification);
 }

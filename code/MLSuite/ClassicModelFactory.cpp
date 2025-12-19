@@ -1,9 +1,9 @@
 #include "ClassicModelFactory.h"
 // #include "LinRegModel.h"
-#include "RegressionBenchmark.h" // NOTE: this is a temp fix.
 #include "RandomForestBuilder.h"
 #include "LinearRegressionBuilder.h" // Include the builder header
 #include "XGBoostBuilder.h"
+#include "LogisticRegressionBuilder.h" // Include LogisticRegressionBuilder for createLogRegModel
 #include <Eigen/Dense> 
 #include <limits>
 #include <random>
@@ -383,6 +383,11 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 std::unique_ptr<IModel> ClassicModelFactory::createLinRegModel() {
     	// Use the builder to create an unfitted LinRegModel
 	return LinearRegressionBuilder().build_unfitted();
+}
+
+std::unique_ptr<IModel> ClassicModelFactory::createLogRegModel() {
+	// Use the builder to create an unfitted LogRegModel
+	return LogisticRegressionBuilder().build_unfitted();
 }
 
 // you cannot return a random forest that is unfitted, so it will build and fit the model in one go.

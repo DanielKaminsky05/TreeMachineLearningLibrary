@@ -34,6 +34,9 @@ set(MLSUITE_SOURCES
     ../code/MLSuite/ClassicModelFactory.cpp
     ../code/MLSuite/XGBoostModel.cpp
     ../code/MLSuite/XGBoostBuilder.cpp
+    ../code/MLSuite/LogRegModel.cpp
+    ../code/MLSuite/LogisticRegressionBuilder.cpp
+    ../code/MLSuite/LogRegModel.cpp
 )
 
 add_executable(runTests
@@ -45,6 +48,7 @@ add_executable(runTests
     TestRandomForest.cpp
     TestClassicModelFactory.cpp
     TestBuilders.cpp
+    TestLogisticRegression.cpp
     MockModel.h
     ${MLSUITE_SOURCES}
 )

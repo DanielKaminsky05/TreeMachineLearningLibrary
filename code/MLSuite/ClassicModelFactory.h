@@ -47,6 +47,7 @@ public:
         const BenchmarkStrategy& evaluationStrategy) override;
 
 	std::unique_ptr<IModel> createLinRegModel(); // linreg 
+	std::unique_ptr<IModel> createLogRegModel();
 
     std::unique_ptr<IModel> createRandomForestModel(int nEstimators, int maxDepth, int minSamplesSplit, bool isClassification = false);
 

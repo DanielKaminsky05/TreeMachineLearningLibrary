@@ -3,11 +3,16 @@ project(Assignment2)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_AUTOMOC ON)
 
 include_directories(3rdparty/eigen-5.0.0)
 
 add_executable(assignment2
     	main.cpp
+    	code/app/DemoRunner.cpp
+    	code/app/DemoRunner.h
+    	code/ui/MainWindow.cpp
+    	code/ui/MainWindow.h
     	code/MLSuite/Dataset.cpp
     	code/MLSuite/LinRegModel.cpp
 	code/MLSuite/LinearRegressionBuilder.cpp
@@ -19,8 +24,16 @@ add_executable(assignment2
     	code/MLSuite/BenchmarkStrategy.cpp
     	code/MLSuite/ClassicModelFactory.cpp
     	code/MLSuite/XGBoostModel.cpp
-    	code/MLSuite/XGBoostBuilder.cpp
+	code/MLSuite/XGBoostBuilder.cpp
 )
+
+find_package(Qt6 COMPONENTS Widgets QUIET)
+if (Qt6_FOUND)
+    target_link_libraries(assignment2 PRIVATE Qt6::Widgets)
+else()
+    find_package(Qt5 COMPONENTS Widgets REQUIRED)
+    target_link_libraries(assignment2 PRIVATE Qt5::Widgets)
+endif()
 
 if (WIN32)
     target_link_libraries(assignment2 PRIVATE Psapi)

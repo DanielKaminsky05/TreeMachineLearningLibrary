@@ -3,6 +3,7 @@
 #include "../code/MLSuite/LinRegModel.h"
 #include "../code/MLSuite/RandomForest.h"
 #include "../code/MLSuite/XGBoostModel.h"
+#include "../code/MLSuite/RegressionBenchmark.h"
 
 class ClassicModelFactoryTest : public ::testing::Test {
 protected:
@@ -39,7 +40,9 @@ TEST_F(ClassicModelFactoryTest, RandomSearch_RandomForest) {
         {"2"}             // minSamplesSplit
     };
     
-    auto bestModel = factory.randomSearch("RandomForest", params, X, y);
+    RegressionBenchmark benchmark;
+    
+    auto bestModel = factory.randomSearch("RandomForest", params, X, y, benchmark);
     ASSERT_NE(bestModel, nullptr);
     EXPECT_EQ(bestModel->getName(), "Random Forest");
 }

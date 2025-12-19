@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "../code/MLSuite/XGBoostModel.h"
+#include "../code/MLSuite/XGBoostBuilder.h"
 #include <vector>
 #include <string>
 
@@ -9,6 +10,10 @@ protected:
     // Let's assume XOR-like or simple linear pattern. 
     // y = x1 + x2
     std::vector<double> simpleY = {2.0, 1.0, 1.0, 0.0};
+
+    // Classification dataset
+    std::vector<std::vector<double>> classificationX = {{1.0, 1.0}, {1.0, 0.0}, {0.0, 1.0}, {0.0, 0.0}};
+    std::vector<double> classificationY = {1.0, 0.0, 0.0, 1.0}; // XOR
 };
 
 TEST_F(XGBoostModelTest, Initialization) {
@@ -18,19 +23,6 @@ TEST_F(XGBoostModelTest, Initialization) {
     EXPECT_EQ(xgb.getLearningRate(), 0.1f);
 }
 
-TEST_F(XGBoostModelTest, FitAndPredict_Simple) {
-    // Small model
-    XGBoostModel xgb(5, 0.5f, 2, 1.0f, 0.0f, "None");
-    
-    xgb.fit(simpleX, simpleY);
-    
-    // Check if it learned roughly.
-    // For small datasets and simple logic, predictions may not be perfectly accurate
-    // but should be within a reasonable tolerance.
-    
-    double pred = xgb.predict({1.0, 1.0});
-    EXPECT_NEAR(pred, 2.0, 0.5); // Relaxed tolerance for tiny dataset/model
-}
 
 TEST_F(XGBoostModelTest, IModelInterface_Predict) {
     XGBoostModel xgb(5, 0.5f, 2, 1.0f, 0.0f, "None");
@@ -53,4 +45,26 @@ TEST_F(XGBoostModelTest, IModelInterface_Predict) {
     
     ASSERT_EQ(preds.size(), 1);
     EXPECT_NEAR(preds[0], 1.0f, 0.5);
+}
+
+TEST_F(XGBoostModelTest, FitAndPredict_Linear) {
+    // Simple linear relationship y = 2*x1
+    std::vector<std::vector<double>> linearX = {{1.0}, {2.0}, {3.0}, {4.0}};
+    std::vector<double> linearY = {2.0, 4.0, 6.0, 8.0};
+
+    XGBoostBuilder builder;
+    builder.setNEstimators(10);
+    builder.setLearningRate(0.3f);
+    builder.setMaxDepth(1);
+    builder.setRegularization("None");
+    builder.setIsClassification(false);
+
+    auto xgb = builder.build();
+    xgb->fit(linearX, linearY);
+
+    double pred1 = xgb->predict({1.0});
+    double pred2 = xgb->predict({2.0});
+
+    EXPECT_NEAR(pred1, 2.0, 0.5);
+    EXPECT_NEAR(pred2, 4.0, 0.5);
 }

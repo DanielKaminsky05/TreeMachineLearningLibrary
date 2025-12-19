@@ -43,19 +43,8 @@ public:
 		const std::string& modelType,
         const std::vector<std::vector<std::string>>& hyperParams,
         const std::vector<std::vector<double>>& X,
-        const std::vector<double>& y) override;
-
-    // Overloaded randomSearch allowing a custom strategy (strategy pattern)
-    // Note: The original override from HyperparameterSearch might not match this signature
-    // unless we update HyperparameterSearch as well. Assuming the user wants to keep the override,
-    // we should update the base class too, OR add this as a non-override overload.
-    // For now, I will add it as an overload and keep the original one (which might default to regression).
-	std::unique_ptr<IModel> randomSearch(
-		const std::string& modelType,
-        const std::vector<std::vector<std::string>>& hyperParams,
-        const std::vector<std::vector<double>>& X,
         const std::vector<double>& y,
-        const BenchmarkStrategy& evaluationStrategy);
+        const BenchmarkStrategy& evaluationStrategy) override;
 
 	std::unique_ptr<IModel> createLinRegModel(); // linreg 
 

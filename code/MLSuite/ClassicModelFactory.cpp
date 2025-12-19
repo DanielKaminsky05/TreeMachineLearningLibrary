@@ -127,18 +127,9 @@ void ClassicModelFactory::fitModel(IModel& model) const {
 	model.fit(features.get_data(), features.get_columns(), targets.get_data());
 }
 
-// Override: defaults to Regression strategy
-std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
-	const std::string& modelType,
-    const std::vector<std::vector<std::string>>& hyperParams,
-    const std::vector<std::vector<double>>& X,
-    const std::vector<double>& y) {
-    
-    RegressionBenchmark defaultStrategy; // Use a default RegressionBenchmark
-    return randomSearch(modelType, hyperParams, X, y, defaultStrategy);
-}
 
-// Overload: accepts custom strategy
+
+// Implementation of HyperparameterSearch::randomSearch
 std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 	const std::string& modelType,
     const std::vector<std::vector<std::string>>& hyperParams,

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QMainWindow>
+#include <QtConcurrent/QtConcurrent>
+#include <QFutureWatcher>
 
 class QPushButton;
 class QTextEdit;
@@ -14,11 +16,12 @@ public:
 private slots:
     void runDemo();
     void clearLog();
-
-private:
+    void onDemoFinished();
     void appendLog(const QString& line);
 
+private:
     QPushButton* runButton_;
     QPushButton* clearButton_;
     QTextEdit* logView_;
+    QFutureWatcher<int> demoWatcher_;
 };

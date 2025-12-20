@@ -6,24 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
 include_directories(3rdparty/eigen-5.0.0)
-
-add_executable(demo
-    	demo.cpp
-    	code/MLSuite/Dataset.cpp
-    	code/MLSuite/LinRegModel.cpp
-	code/MLSuite/LinearRegressionBuilder.cpp
-	code/MLSuite/LogRegModel.cpp
-	code/MLSuite/LogisticRegressionBuilder.cpp
-	code/MLSuite/RandomForest.cpp
-	code/MLSuite/RandomForestBuilder.cpp
-    	code/MLSuite/DecisionTree.cpp
-    	code/MLSuite/RegressionBenchmark.cpp
-    	code/MLSuite/ClassificationBenchmark.cpp
-    	code/MLSuite/BenchmarkStrategy.cpp
-    	code/MLSuite/ClassicModelFactory.cpp
-    	code/MLSuite/XGBoostModel.cpp
-	code/MLSuite/XGBoostBuilder.cpp
-)
+include_directories(code)
 
 add_executable(ui-demo
     	main.cpp

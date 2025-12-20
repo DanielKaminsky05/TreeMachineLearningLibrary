@@ -1,13 +1,14 @@
 #include "MainWindow.h"
 
-#include <QApplication>
-#include <QLabel>
-#include <QPushButton>
-#include <QTextEdit>
-#include <QVBoxLayout>
-#include <QWidget>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QTextEdit>
+#include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QWidget>
+#include <QMetaObject>
 
-#include "../app/DemoRunner.h"
+#include "app/DemoRunner.h"
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent), runButton_(nullptr), clearButton_(nullptr), logView_(nullptr) {
@@ -37,23 +38,32 @@ MainWindow::MainWindow(QWidget* parent)
 
     connect(runButton_, &QPushButton::clicked, this, &MainWindow::runDemo);
     connect(clearButton_, &QPushButton::clicked, this, &MainWindow::clearLog);
+    connect(&demoWatcher_, &QFutureWatcher<int>::finished, this, &MainWindow::onDemoFinished);
 }
 
 void MainWindow::runDemo() {
     runButton_->setEnabled(false);
     appendLog("Starting demo...");
 
-    int result = DemoRunner::runFullDemo([this](const std::string& line) {
-        appendLog(QString::fromStdString(line));
-        QApplication::processEvents();
-    });
+    // The lambda that will be called from the background thread
+    auto logCallback = [this](const std::string& line) {
+        // Use invokeMethod to safely call appendLog on the GUI thread
+        QMetaObject::invokeMethod(this, "appendLog", Qt::QueuedConnection,
+                                  Q_ARG(QString, QString::fromStdString(line)));
+    };
 
+    // Run the demo function in a separate thread
+    QFuture<int> future = QtConcurrent::run(&DemoRunner::runFullDemo, logCallback);
+    demoWatcher_.setFuture(future);
+}
+
+void MainWindow::onDemoFinished() {
+    int result = demoWatcher_.result();
     if (result == 0) {
         appendLog("Demo finished successfully.");
     } else {
         appendLog("Demo finished with errors.");
     }
-
     runButton_->setEnabled(true);
 }
 

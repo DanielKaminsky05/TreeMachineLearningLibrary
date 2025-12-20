@@ -1,6 +1,5 @@
 #pragma once
 
-#include "DemoRunner.h"
 #include <functional>
 #include <string>
 

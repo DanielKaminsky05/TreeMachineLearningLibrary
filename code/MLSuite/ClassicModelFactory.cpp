@@ -136,7 +136,8 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
     	const std::vector<std::vector<std::string>>& hyperParams,
     	const std::vector<std::vector<double>>& X,
     	const std::vector<double>& y,
-    	const BenchmarkStrategy& evaluationStrategy) {
+    	const BenchmarkStrategy& evaluationStrategy,
+        const LogFn& log) {
 
 	if (X.empty() || y.empty() || X.size() != y.size()) {
 		throw std::invalid_argument("randomSearch: X and y must be non-empty and have matching sizes.");
@@ -154,6 +155,8 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 	std::mt19937 rng(42u);
 	const int maxIterations = 20;
     	const int kFolds = 5;
+
+    log("Starting random search for " + modelType + " with " + std::to_string(maxIterations) + " iterations and " + std::to_string(kFolds) + "-fold CV.");
 
     	// Prepare shuffled indices for K-Fold Cross Validation
     	std::vector<size_t> indices(X.size());
@@ -212,6 +215,9 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 			int nEstimators     = std::stoi(pickRandom(nEstimatorsVals, rng));
 			int maxDepth        = std::stoi(pickRandom(maxDepthVals, rng));
 			int minSamplesSplit = std::stoi(pickRandom(minSamplesSplitVals, rng));
+            
+            log("  [" + std::to_string(iter + 1) + "/" + std::to_string(maxIterations) + "] Testing params: n_estimators=" + std::to_string(nEstimators) + 
+                ", max_depth=" + std::to_string(maxDepth) + ", min_samples_split=" + std::to_string(minSamplesSplit));
 
             	double totalScore = 0.0;
 
@@ -252,8 +258,11 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
             	}
 
             		double avgScore = totalScore / kFolds;
+                    log("    -> CV Score (MSE): " + std::to_string(avgScore));
+
 
 			if (avgScore < bestScore) {
+                log("    Found new best score: " + std::to_string(avgScore));
 				bestScore = avgScore;
                 		bestRF_nEstimators = nEstimators;
                 		bestRF_maxDepth = maxDepth;
@@ -262,8 +271,11 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 			}
 		}
 
+        log("Random search finished. Best score: " + std::to_string(bestScore));
         // Rebuild best model on full dataset
 		if (foundAny) {
+			log("Best parameters found: n_estimators=" + std::to_string(bestRF_nEstimators) + ", max_depth=" + std::to_string(bestRF_maxDepth) + ", min_samples_split=" + std::to_string(bestRF_minSamplesSplit));
+            log("Retraining best model on the full dataset...");
 			auto finalRf = RandomForestBuilder().setEstimators(bestRF_nEstimators).setMaxDepth(bestRF_maxDepth)
 				.setMinSamplesSplit(bestRF_minSamplesSplit)
                 		.build();
@@ -299,6 +311,10 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 			float subsampleRatio   = std::stof(pickRandom(subsampleVals, rng));
 			float gamma            = std::stof(pickRandom(gammaVals, rng));
 			std::string regularization = pickRandom(regularizationVals, rng);
+
+            log("  [" + std::to_string(iter + 1) + "/" + std::to_string(maxIterations) + "] Testing params: n_estimators=" + std::to_string(nEstimators) + 
+                ", learning_rate=" + std::to_string(learningRate) + ", max_depth=" + std::to_string(maxDepth) + "...");
+
 
             double totalScore = 0.0;
 
@@ -341,6 +357,8 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
             }
 
             	double avgScore = totalScore / kFolds;
+                log("    -> CV Score (MSE): " + std::to_string(avgScore));
+
 
 		if (avgScore < bestScore) {
 			bestScore = avgScore;
@@ -353,9 +371,12 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
                 	foundAny = true;
 		}
 	}
+        log("Random search finished. Best score: " + std::to_string(bestScore));
 
         	// Rebuild best model on full dataset
         	if (foundAny) {
+			log("Best parameters found: n_estimators=" + std::to_string(bestXGB_nEstimators) + ", learning_rate=" + std::to_string(bestXGB_learningRate) + "...");
+            log("Retraining best model on the full dataset...");
 			auto finalXgb = XGBoostBuilder().setNEstimators(bestXGB_nEstimators).setLearningRate(bestXGB_learningRate).setMaxDepth(bestXGB_maxDepth)
                 	.setSubsampleRatio(bestXGB_subsampleRatio)
                 	.setGamma(bestXGB_gamma)

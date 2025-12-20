@@ -14,7 +14,7 @@ struct BenchmarkResult {
     std::size_t numSamples{0};
     double fitMillis{0.0};
     double predictMillis{0.0};
-    std::size_t memoryBytes{0};    // working set / current RSS snapshot
+    std::size_t memoryBytes{0};    // current RSS snapshots, working set 
 
     // Regression metrics
     double mse{std::numeric_limits<double>::quiet_NaN()};
@@ -28,7 +28,7 @@ struct BenchmarkResult {
     double f1{std::numeric_limits<double>::quiet_NaN()};
 };
 
-// Interface for benchmark strategies. Implementations should return a filled BenchmarkResult.
+// benchmark strategy, impls return a filled BenchmarkResult
 class BenchmarkStrategy {
 public:
     virtual ~BenchmarkStrategy() = default;
@@ -37,14 +37,12 @@ public:
                                     const Dataset& yData,
                                     double fitMillis = 0.0) const = 0;
 
-    // Evaluates the model and returns a "loss" score (lower is better).
-    // For Regression: Returns MSE.
-    // For Classification: Returns (1.0 - Accuracy), i.e., Error Rate.
+    // MSE for regression, 1 - accuracy for classif 
     virtual double evaluate(const IModel& model, 
                             const Dataset& features, 
                             const Dataset& targets) const = 0;
 
-    // Orchestrates training (fit), timing, and executing the benchmark.
+    // train, time and execute 
     BenchmarkResult trainAndExecute(IModel& model,
                                     const Dataset& trainFeatures,
                                     const Dataset& trainTargets,
@@ -52,7 +50,7 @@ public:
                                     const Dataset& testTargets) const;
 };
 
-// Shared helpers for timing and memory snapshots.
+// shared helpers for timing and memory snapshots
 double currentMemoryUsageBytes();
 double millisBetween(const std::chrono::high_resolution_clock::time_point& start,
                      const std::chrono::high_resolution_clock::time_point& end);

@@ -219,17 +219,13 @@ void RandomForest::fit(const std::vector<float>& x_values, const std::vector<std
         	throw std::invalid_argument("The size of x_values is not a multiple of the number of columns.");
     	}
 
-        // --- FIXED LOGIC FOR ONE-HOT ENCODED TARGETS ---
-        // If y_values has more elements than rows, it might be one-hot encoded (or multi-variate).
-        // Since the internal model expects a single scalar target per row, we attempt to decode it.
+        // since the internal model expects a single scalar target per row, it needs to be decoded
         std::vector<double> targets_double;
         targets_double.reserve(n_rows);
 
         if (y_values.size() > n_rows) {
             size_t n_target_cols = y_values.size() / n_rows;
-            // Simple check: is it a clean multiple?
-            if (y_values.size() % n_rows == 0 && n_target_cols > 1) {
-                // Assume one-hot/dummy encoding: convert to class index (0, 1, 2...)
+            if (y_values.size() % n_rows == 0 && n_target_cols > 1) { // check if it is a clean multiple 
                 for (size_t i = 0; i < n_rows; ++i) {
                     double maxVal = -std::numeric_limits<double>::infinity();
                     int maxIdx = 0;
@@ -242,22 +238,18 @@ void RandomForest::fit(const std::vector<float>& x_values, const std::vector<std
                     }
                     targets_double.push_back(static_cast<double>(maxIdx));
                 }
-            } else {
-                 // Fallback or mismatch error
+            } else { // error handling 
                 throw std::invalid_argument("Number of samples in features and targets do not match (and not valid one-hot).");
             }
-        } else if (y_values.size() == n_rows) {
-            // 1:1 mapping, standard scalar targets
+        } else if (y_values.size() == n_rows) { // 1-1 scalar mapping for targets 
              for (float v : y_values) {
                 targets_double.push_back(static_cast<double>(v));
             }
         } else {
              throw std::invalid_argument("Number of targets is less than number of feature rows.");
         }
-        // -----------------------------------------------
 
-    	// Reshape 1D vector to 2D vector and convert to double
-    	std::vector<std::vector<double>> features_double(n_rows, std::vector<double>(n_cols));
+    	std::vector<std::vector<double>> features_double(n_rows, std::vector<double>(n_cols)); // reshape then convert to double 
     	for (size_t i = 0; i < n_rows; ++i) {
         	for (size_t j = 0; j < n_cols; ++j) {
             		features_double[i][j] = static_cast<double>(x_values[i * n_cols + j]);
@@ -267,6 +259,7 @@ void RandomForest::fit(const std::vector<float>& x_values, const std::vector<std
     	this->fit(features_double, targets_double);
 }
 
+// predict method 
 std::vector<float> RandomForest::predict(const std::vector<float>& x_values, const std::vector<std::string>& columns) const {
 	if (x_values.empty() || columns.empty()) {
         	return {};
@@ -287,8 +280,7 @@ std::vector<float> RandomForest::predict(const std::vector<float>& x_values, con
     	all_predictions.reserve(n_rows);
 
     	for (size_t i = 0; i < n_rows; ++i) {
-        	// Extract a single row and convert to double
-        	std::vector<double> single_feature_double;
+        	std::vector<double> single_feature_double; // row of floats to double 
         	single_feature_double.reserve(n_cols);
         	for (size_t j = 0; j < n_cols; ++j) {
             		single_feature_double.push_back(static_cast<double>(x_values[i * n_cols + j]));
@@ -298,7 +290,7 @@ std::vector<float> RandomForest::predict(const std::vector<float>& x_values, con
             		throw std::invalid_argument("predict: input dimension does not match training data");
         	}
 
-            // Calls the internal predict(std::vector<double>) which handles isClassification check
+            // calls internal predict(std::vector<double>) which handles isClassification check
             all_predictions.push_back(static_cast<float>(this->predict(single_feature_double)));
     }
 

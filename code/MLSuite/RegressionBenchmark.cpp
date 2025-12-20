@@ -8,8 +8,9 @@
 #include <cmath>
 #include <chrono>
 
+// contains all methods to benchmark performance metrics of a regression model, concrete Strategy implementation for BenchmarkStrategy
 namespace {
-// Helper function to calculate Mean Squared Error (MSE)
+
 double calculateMSE(const std::vector<float>& actual, const std::vector<float>& predicted) {
     double mse = 0.0;
     if (actual.empty()) return 0.0;
@@ -19,7 +20,6 @@ double calculateMSE(const std::vector<float>& actual, const std::vector<float>& 
     return mse / actual.size();
 }
 
-// Helper function to calculate R-squared
 double calculateR2(const std::vector<float>& actual, const std::vector<float>& predicted) {
     if (actual.empty()) return 0.0;
     double sum_actual = std::accumulate(actual.begin(), actual.end(), 0.0);
@@ -34,7 +34,6 @@ double calculateR2(const std::vector<float>& actual, const std::vector<float>& p
     }
 
     if (ss_total == 0.0) {
-        // If total sum of squares is zero, R-squared is undefined or can be considered 1 if predictions are perfect.
         return (ss_res == 0.0) ? 1.0 : 0.0;
     }
 
@@ -89,13 +88,10 @@ BenchmarkResult RegressionBenchmark::execute(const IModel& model,
 double RegressionBenchmark::evaluate(const IModel& model, 
                                      const Dataset& features, 
                                      const Dataset& targets) const {
-    // Reuses the local calculateMSE helper.
-    // Predict
     std::vector<float> predictions = model.predict(features.get_data(), features.get_columns());
     const std::vector<float>& actual = targets.get_data();
 
-    // Check sizes
-    if (predictions.size() != actual.size()) {
+    if (predictions.size() != actual.size()) { // size safety check 
         std::cerr << "evaluate: Prediction size mismatch." << std::endl;
         return std::numeric_limits<double>::infinity(); 
     }

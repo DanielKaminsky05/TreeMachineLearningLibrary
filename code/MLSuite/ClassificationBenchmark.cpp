@@ -7,6 +7,7 @@
 #include <chrono>
 #include <limits>
 
+// benchmark results for classif models
 namespace {
 double safeDiv(double num, double den) {
     if (den == 0.0) return std::numeric_limits<double>::quiet_NaN();

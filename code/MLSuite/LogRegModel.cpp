@@ -1,7 +1,6 @@
-// code/MLSuite/LogisticRegressionModel.cpp
 #include "LogRegModel.h"
-#include <cmath> // For exp()
-#include <iostream> // For debugging, remove later
+#include <cmath> 
+#include <iostream> 
 
 LogRegModel::LogRegModel() {}
 
@@ -9,7 +8,7 @@ float LogRegModel::sigmoid(float z) const {
     return 1.0f / (1.0f + std::exp(-z));
 }
 
-// primary fit method with all parameters
+// fit method 
 void LogRegModel::fit(const std::vector<float>& x_values, const std::vector<std::string>& columns, const std::vector<float>& y_values_vec,
                                  const std::string& regularization, double lambda,
                                  double learning_rate, int num_iterations) {
@@ -41,17 +40,15 @@ void LogRegModel::fit(const std::vector<float>& x_values, const std::vector<std:
         throw std::invalid_argument("Number of iterations must be positive.");
     }
     
-    // Map the 1D float vector to an Eigen Matrix
+    // map the 1D float vector to an Eigen Matrix
     Eigen::Map<const Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> X(x_values.data(), n_rows, n_cols);
-    // Map the target vector to an Eigen Vector
-    Eigen::Map<const Eigen::VectorXf> y(y_values_vec.data(), n_rows);
-
+    Eigen::Map<const Eigen::VectorXf> y(y_values_vec.data(), n_rows); // map the target vector to an Eigen Vector
 
     Eigen::MatrixXf X_b(n_rows, n_cols + 1);
     X_b.setOnes();
     X_b.rightCols(n_cols) = X;
 
-    // Initialize weights (theta) with zeros
+    // make weights (theta) with zeros
     m_theta = Eigen::VectorXf::Zero(n_cols + 1);
 
     for (int i = 0; i < num_iterations; ++i) {
@@ -61,9 +58,9 @@ void LogRegModel::fit(const std::vector<float>& x_values, const std::vector<std:
         Eigen::VectorXf error = h - y;
         Eigen::VectorXf gradient = X_b.transpose() * error / static_cast<float>(n_rows);
 
-        // Apply regularization
+        // regularization
         if (regularization == "L2") {
-            // Do not regularize the bias term (m_theta(0))
+            // ignore the bias term (m_theta(0))
             Eigen::VectorXf regularized_theta = m_theta;
             regularized_theta(0) = 0.0; 
             gradient += (lambda / static_cast<float>(n_rows)) * regularized_theta;
@@ -74,9 +71,11 @@ void LogRegModel::fit(const std::vector<float>& x_values, const std::vector<std:
 }
 
 Eigen::VectorXf LogRegModel::predict_proba(const Eigen::Ref<const Eigen::MatrixXf>& X_test) const {
+
     if (m_theta.size() == 0) {
         throw std::logic_error("Model has not been fitted yet. Call fit() before predict_proba().");
     }
+
     if (X_test.cols() + 1 != m_theta.size()) {
         throw std::invalid_argument("Number of features in prediction data does not match the trained model.");
     }
@@ -102,9 +101,8 @@ Eigen::VectorXf LogRegModel::get_theta() const {
     return m_theta;
 }
 
-// concrete method implementations for the IModel interface for benchmark 
+// concrete method implementations for the IModel interface for benchmark, overload now calls the primary fit method with default hyperparameters
 void LogRegModel::fit(const std::vector<float>& x_values, const std::vector<std::string>& columns, const std::vector<float>& y_values) {
-    // This overload now calls the primary fit method with default hyperparameters
     fit(x_values, columns, y_values, "None", 0.0, 0.01, 1000); 
 }
 
@@ -124,21 +122,21 @@ std::vector<float> LogRegModel::predict(const std::vector<float>& x_values, cons
         throw std::invalid_argument("The size of x_values is not a multiple of the number of columns.");
     }
     
-    // Check if the number of features matches the trained model
-    if (m_theta.size() != n_cols + 1) { // +1 for the bias term
+    if (m_theta.size() != n_cols + 1) { // +1 for bias term 
         throw std::invalid_argument("Number of features in prediction data does not match the trained model.");
     }
 
-    // Map the 1D float vector to an Eigen Matrix
+    // map 1D float vector to an Eigen Matrix
     Eigen::Map<const Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> X_test_eigen(x_values.data(), n_rows, n_cols);
 
-    // Get Eigen predictions
+    // get preds 
     Eigen::VectorXf predictions_eigen = predict(X_test_eigen);
 
-    // Convert Eigen::VectorXf back to std::vector<float>
+    // Eigen::VectorXf back to std::vector<float>
     return std::vector<float>(predictions_eigen.data(), predictions_eigen.data() + predictions_eigen.size());
 }
 
+// get name for benchmarkstrategy 
 std::string LogRegModel::getName() const {
     return "Logistic Regression";
 }

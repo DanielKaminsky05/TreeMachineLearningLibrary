@@ -13,21 +13,16 @@ class LogRegModel : public IModel {
 public:
     LogRegModel();
 
-    // Primary Fit method for Logistic Regression with regularization
     void fit(const std::vector<float>& x_values, const std::vector<std::string>& columns, const std::vector<float>& y_values_vec,
              const std::string& regularization = "None", double lambda = 0.0,
              double learning_rate = 0.01, int num_iterations = 1000);
 
-    // Predict method for Eigen Matrix input, returns probabilities
     Eigen::VectorXf predict_proba(const Eigen::Ref<const Eigen::MatrixXf>& X_test) const;
 
-    // Predict method for Eigen Matrix input, returns class labels (0 or 1)
     Eigen::VectorXf predict(const Eigen::Ref<const Eigen::MatrixXf>& X_test) const;
 
-    // Getter for trained weights
     Eigen::VectorXf get_theta() const;
 
-    // IModel interface implementations (calls primary fit with default hyperparameters)
     void fit(const std::vector<float>& x_values, const std::vector<std::string>& columns, const std::vector<float>& y_values) override;
     std::vector<float> predict(const std::vector<float>& x_values, const std::vector<std::string>& columns) const override;
     std::string getName() const override;

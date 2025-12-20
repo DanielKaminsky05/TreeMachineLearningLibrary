@@ -6,7 +6,7 @@
 
 LinRegModel::LinRegModel() {}
 
-void LinRegModel::fit(Dataset& X_dataset, Dataset& y_dataset, const std::string& regularization, double lambda) { // TODO: add order+ API for linreg.
+void LinRegModel::fit(Dataset& X_dataset, Dataset& y_dataset, const std::string& regularization, double lambda) { 
     	std::vector<float> x_data = X_dataset.get_data();
     	std::vector<std::string> x_columns = X_dataset.get_columns();
     	int n_cols_x = x_columns.size();
@@ -76,7 +76,7 @@ void LinRegModel::fit(const std::vector<float>& x_values, const std::vector<std:
     	// map the target vector to an Eigen Vector
     	Eigen::Map<const Eigen::VectorXf> y(y_values.data(), n_rows);
 
-    	// Add bias term, solve theta for weights 
+    	// add bias term, solve theta for weights 
     	Eigen::MatrixXf X_b(n_rows, n_cols + 1);
     	X_b.setOnes();
     	X_b.rightCols(n_cols) = X;
@@ -106,13 +106,13 @@ std::vector<float> LinRegModel::predict(const std::vector<float>& x_values, cons
     	// map the 1D float vector to an Eigen Matrix
     	Eigen::Map<const Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> X_test(x_values.data(), n_rows, n_cols);
 
-    	// Add bias term and predict
+    	// add bias term and predict
     	Eigen::MatrixXf X_test_b(X_test.rows(), X_test.cols() + 1);
     	X_test_b.setOnes();
     	X_test_b.rightCols(X_test.cols()) = X_test;
     	Eigen::VectorXf predictions_eigen = X_test_b * m_theta;
 
-    	// Convert Eigen::VectorXf back to std::vector<float>
+    	// convert Eigen::VectorXf back to std::vector<float> after done with Eigen 
     	return std::vector<float>(predictions_eigen.data(), predictions_eigen.data() + predictions_eigen.size());
 }
 

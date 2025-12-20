@@ -1,9 +1,8 @@
 #include "ClassicModelFactory.h"
-// #include "LinRegModel.h"
 #include "RandomForestBuilder.h"
-#include "LinearRegressionBuilder.h" // Include the builder header
+#include "LinearRegressionBuilder.h" 
 #include "XGBoostBuilder.h"
-#include "LogisticRegressionBuilder.h" // Include LogisticRegressionBuilder for createLogRegModel
+#include "LogisticRegressionBuilder.h" 
 #include <Eigen/Dense> 
 #include <limits>
 #include <random>
@@ -31,7 +30,7 @@ void ensureTypeValid(const std::string& type, const char* label) {
 
 
 
-// Utility to pick a random element from a vector of strings
+// pick a random element from a vector of strings
 const std::string& pickRandom(const std::vector<std::string>& values, std::mt19937& rng) {
 	if (values.empty()) {
 		throw std::invalid_argument("pickRandom: hyperparameter value list cannot be empty.");
@@ -73,6 +72,8 @@ void ClassicModelFactory::setTestDataPaths(const std::string& featuresPath,
 	m_testType = type;
 }
 
+
+// getters for Dataset 
 const std::string& ClassicModelFactory::getTrainFeaturesPath() const {
 	return m_trainFeaturesPath;
 }
@@ -121,6 +122,7 @@ Dataset ClassicModelFactory::loadTestTargets() const {
 	return Dataset(m_testTargetsPath, m_testType);
 }
 
+// factory abstraction 
 void ClassicModelFactory::fitModel(IModel& model) const {
 	Dataset features = loadTrainFeatures();
 	Dataset targets = loadTrainTargets();
@@ -162,8 +164,7 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 	double bestScore = std::numeric_limits<double>::infinity(); // Assuming lower is better (Loss/Error)
 	std::unique_ptr<IModel> bestModel;
 
-    // Parameters to store the best configuration found
-    // RandomForest
+// params for best model fitted 
     int bestRF_nEstimators = 0;
     int bestRF_maxDepth = 0;
     int bestRF_minSamplesSplit = 0;
@@ -178,7 +179,7 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 
     bool foundAny = false;
 
-    // Helper to convert double vectors to float vectors for Dataset compatibility
+	// helper function for float to double & double to float conversions 
     auto doubleToFloat1D = [](const std::vector<double>& v) {
          return std::vector<float>(v.begin(), v.end());
     };
@@ -246,7 +247,7 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 
                 rf->fit(trainX, trainY);
                 
-                // Construct datasets for evaluation
+		// make a Dataset for eval 
                 Dataset valXData(doubleToFloat2D(valX), {});
                 Dataset valYData({}, doubleToFloat1D(valY));
 
@@ -276,7 +277,6 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
         }
 
 	} else if (modelType == "XGBoost") {
-		// Expected order:
 		//   hyperParams[0] -> candidates for nEstimators (int)
 		//   hyperParams[1] -> candidates for learningRate (float)
 		//   hyperParams[2] -> candidates for maxDepth (int)
@@ -390,7 +390,7 @@ std::unique_ptr<IModel> ClassicModelFactory::createLogRegModel() {
 	return LogisticRegressionBuilder().build_unfitted();
 }
 
-// you cannot return a random forest that is unfitted, so it will build and fit the model in one go.
+// build and fit in one go for random forest
 std::unique_ptr<IModel> ClassicModelFactory::createRandomForestModel(int nEstimators, int maxDepth, int minSamplesSplit, bool isClassification) {
 	return RandomForestBuilder()
 		.setEstimators(nEstimators)
@@ -403,6 +403,7 @@ std::unique_ptr<IModel> ClassicModelFactory::createRandomForestModel(int nEstima
         	.build();
 }
 
+// build and fit in one go for XGB 
 std::unique_ptr<IModel> ClassicModelFactory::createXGBoostModel(int nEstimators, float learningRate, int maxDepth, float subsampleRatio, float gamma, const std::string& regularization, bool isClassification) {
     	return XGBoostBuilder()
         	.setNEstimators(nEstimators)

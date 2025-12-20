@@ -1,24 +1,23 @@
-// code/MLSuite/LogisticRegressionBuilder.cpp
 #include "LogisticRegressionBuilder.h"
 #include <stdexcept>
 
-// Constructor initializes with default values
 LogisticRegressionBuilder::LogisticRegressionBuilder(): 
     m_X_train(nullptr), 
     m_y_train(nullptr), 
     m_regularization("None"), 
     m_lambda(0.0),
-    m_learning_rate(0.01),    // Default learning rate
-    m_num_iterations(1000) {} // Default number of iterations
+    m_learning_rate(0.01),    
+    m_num_iterations(1000) {} 
 
-// Sets the training data
+// setters for data, regularization, learning rate, lambda, number of iterations 
+
 LogisticRegressionBuilder& LogisticRegressionBuilder::with_training_data(Dataset& X_train, Dataset& y_train) {
     m_X_train = &X_train;
     m_y_train = &y_train;
     return *this;
 }
 
-// Sets the regularization type
+
 LogisticRegressionBuilder& LogisticRegressionBuilder::with_regularization(const std::string& type) {
     m_regularization = type;
     return *this;
@@ -36,21 +35,18 @@ LogisticRegressionBuilder& LogisticRegressionBuilder::with_learning_rate(double 
     return *this;
 }
 
-// Sets the number of iterations
 LogisticRegressionBuilder& LogisticRegressionBuilder::with_num_iterations(int iterations) {
     m_num_iterations = iterations;
     return *this;
 }
 
-// Creates, trains, and returns the final model
+// train and return final model 
 LogRegModel LogisticRegressionBuilder::fit() {
-    // Ensure that the training data has been provided before fitting
     if (!m_X_train || !m_y_train) {
         throw std::runtime_error("Training data must be provided before fitting the model.");
     }
 
     LogRegModel model;
-    // Extract raw data and columns from Datasets
     std::vector<float> x_data = m_X_train->get_data();
     std::vector<std::string> x_cols = m_X_train->get_columns();
     std::vector<float> y_data = m_y_train->get_data();
@@ -59,7 +55,7 @@ LogRegModel LogisticRegressionBuilder::fit() {
     return model;
 }
 
-// New method to build an unfitted model
+// return untrained model 
 std::unique_ptr<LogRegModel> LogisticRegressionBuilder::build_unfitted() {
     return std::make_unique<LogRegModel>();
 }

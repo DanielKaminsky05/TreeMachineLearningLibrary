@@ -1,4 +1,3 @@
-// code/MLSuite/LogisticRegressionBuilder.h
 #ifndef LOGISTIC_REGRESSION_BUILDER_H
 #define LOGISTIC_REGRESSION_BUILDER_H
 

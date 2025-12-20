@@ -28,13 +28,12 @@ void ensureTypeValid(const std::string& type, const char* label) {
 	}
 }
 
-
-
 // pick a random element from a vector of strings
 const std::string& pickRandom(const std::vector<std::string>& values, std::mt19937& rng) {
 	if (values.empty()) {
 		throw std::invalid_argument("pickRandom: hyperparameter value list cannot be empty.");
 	}
+
 	std::uniform_int_distribution<std::size_t> dist(0, values.size() - 1);
 	return values[dist(rng)];
 }
@@ -134,10 +133,10 @@ void ClassicModelFactory::fitModel(IModel& model) const {
 // Implementation of HyperparameterSearch::randomSearch
 std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 	const std::string& modelType,
-    const std::vector<std::vector<std::string>>& hyperParams,
-    const std::vector<std::vector<double>>& X,
-    const std::vector<double>& y,
-    const BenchmarkStrategy& evaluationStrategy) {
+    	const std::vector<std::vector<std::string>>& hyperParams,
+    	const std::vector<std::vector<double>>& X,
+    	const std::vector<double>& y,
+    	const BenchmarkStrategy& evaluationStrategy) {
 
 	if (X.empty() || y.empty() || X.size() != y.size()) {
 		throw std::invalid_argument("randomSearch: X and y must be non-empty and have matching sizes.");
@@ -154,43 +153,45 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 	// Fixed seed for reproducibility
 	std::mt19937 rng(42u);
 	const int maxIterations = 20;
-    const int kFolds = 5;
+    	const int kFolds = 5;
 
-    // Prepare shuffled indices for K-Fold Cross Validation
-    std::vector<size_t> indices(X.size());
-    std::iota(indices.begin(), indices.end(), 0);
-    std::shuffle(indices.begin(), indices.end(), rng);
+    	// Prepare shuffled indices for K-Fold Cross Validation
+    	std::vector<size_t> indices(X.size());
+    	std::iota(indices.begin(), indices.end(), 0);
+    	std::shuffle(indices.begin(), indices.end(), rng);
 
 	double bestScore = std::numeric_limits<double>::infinity(); // Assuming lower is better (Loss/Error)
 	std::unique_ptr<IModel> bestModel;
 
-// params for best model fitted 
-    int bestRF_nEstimators = 0;
-    int bestRF_maxDepth = 0;
-    int bestRF_minSamplesSplit = 0;
+	// params for best model fitted 
+    	int bestRF_nEstimators = 0;
+    	int bestRF_maxDepth = 0;
+    	int bestRF_minSamplesSplit = 0;
 
-    // XGBoost
-    int bestXGB_nEstimators = 0;
-    float bestXGB_learningRate = 0.0f;
-    int bestXGB_maxDepth = 0;
-    float bestXGB_subsampleRatio = 0.0f;
-    float bestXGB_gamma = 0.0f;
-    std::string bestXGB_regularization;
+    	// XGBoost
+    	int bestXGB_nEstimators = 0;
+    	float bestXGB_learningRate = 0.0f;
+    	int bestXGB_maxDepth = 0;
+    	float bestXGB_subsampleRatio = 0.0f;
+    	float bestXGB_gamma = 0.0f;
+    	std::string bestXGB_regularization;
 
-    bool foundAny = false;
+    	bool foundAny = false;
 
 	// helper function for float to double & double to float conversions 
-    auto doubleToFloat1D = [](const std::vector<double>& v) {
-         return std::vector<float>(v.begin(), v.end());
-    };
-    auto doubleToFloat2D = [](const std::vector<std::vector<double>>& v) {
-        std::vector<std::vector<float>> out;
-        out.reserve(v.size());
-        for(const auto& row : v) {
-            out.emplace_back(row.begin(), row.end());
-        }
-        return out;
-    };
+    	auto doubleToFloat1D = [](const std::vector<double>& v) {
+         	return std::vector<float>(v.begin(), v.end());
+    	};
+
+    	auto doubleToFloat2D = [](const std::vector<std::vector<double>>& v) {
+        	std::vector<std::vector<float>> out;
+        	out.reserve(v.size());
+        	for(const auto& row : v) {
+            		out.emplace_back(row.begin(), row.end());
+        	}
+
+        	return out;
+    	};
 
 	if (modelType == "RandomForest") {
 		// Expected order:
@@ -212,69 +213,64 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 			int maxDepth        = std::stoi(pickRandom(maxDepthVals, rng));
 			int minSamplesSplit = std::stoi(pickRandom(minSamplesSplitVals, rng));
 
-            double totalScore = 0.0;
+            	double totalScore = 0.0;
 
-            // K-Fold Loop
-            for (int k = 0; k < kFolds; ++k) {
-                std::vector<std::vector<double>> trainX, valX;
-                std::vector<double> trainY, valY;
+            	// K-Fold Loop
+            	for (int k = 0; k < kFolds; ++k) {
+                	std::vector<std::vector<double>> trainX, valX;
+                	std::vector<double> trainY, valY;
                 
-                // Reserve memory to avoid reallocations
-                trainX.reserve(X.size()); 
-                valX.reserve(X.size() / kFolds + 2);
-                trainY.reserve(y.size()); 
-                valY.reserve(y.size() / kFolds + 2);
+                	// Reserve memory to avoid reallocations
+                	trainX.reserve(X.size()); 
+                	valX.reserve(X.size() / kFolds + 2);
+                	trainY.reserve(y.size()); 
+                	valY.reserve(y.size() / kFolds + 2);
 
-                size_t foldSize = X.size() / kFolds;
-                size_t start = k * foldSize;
-                size_t end = (k == kFolds - 1) ? X.size() : start + foldSize;
+                	size_t foldSize = X.size() / kFolds;
+                	size_t start = k * foldSize;
+                	size_t end = (k == kFolds - 1) ? X.size() : start + foldSize;
 
-                for (size_t i = 0; i < X.size(); ++i) {
-                    if (i >= start && i < end) {
-                        valX.push_back(X[indices[i]]);
-                        valY.push_back(y[indices[i]]);
-                    } else {
-                        trainX.push_back(X[indices[i]]);
-                        trainY.push_back(y[indices[i]]);
-                    }
-                }
+                	for (size_t i = 0; i < X.size(); ++i) {
+                    		if (i >= start && i < end) {
+                        		valX.push_back(X[indices[i]]);
+                        		valY.push_back(y[indices[i]]);
+                    		} else {
+                        		trainX.push_back(X[indices[i]]);
+                        		trainY.push_back(y[indices[i]]);
+                    		}
+                	}
 
-                auto rf = RandomForestBuilder()
-                    .setEstimators(nEstimators)
-                    .setMaxDepth(maxDepth)
-                    .setMinSamplesSplit(minSamplesSplit)
-                    .build();
+                	auto rf = RandomForestBuilder().setEstimators(nEstimators).setMaxDepth(maxDepth).setMinSamplesSplit(minSamplesSplit).build();
 
-                rf->fit(trainX, trainY);
+                	rf->fit(trainX, trainY);
                 
-		// make a Dataset for eval 
-                Dataset valXData(doubleToFloat2D(valX), {});
-                Dataset valYData({}, doubleToFloat1D(valY));
+			// make a Dataset for eval 
+                	Dataset valXData(doubleToFloat2D(valX), {});
+                	Dataset valYData({}, doubleToFloat1D(valY));
 
-                totalScore += evaluationStrategy.evaluate(*rf, valXData, valYData);
-            }
+                	totalScore += evaluationStrategy.evaluate(*rf, valXData, valYData);
+            	}
 
-            double avgScore = totalScore / kFolds;
+            		double avgScore = totalScore / kFolds;
 
 			if (avgScore < bestScore) {
 				bestScore = avgScore;
-                bestRF_nEstimators = nEstimators;
-                bestRF_maxDepth = maxDepth;
-                bestRF_minSamplesSplit = minSamplesSplit;
-                foundAny = true;
+                		bestRF_nEstimators = nEstimators;
+                		bestRF_maxDepth = maxDepth;
+                		bestRF_minSamplesSplit = minSamplesSplit;
+                		foundAny = true;
 			}
 		}
 
         // Rebuild best model on full dataset
-        if (foundAny) {
-            auto finalRf = RandomForestBuilder()
-                .setEstimators(bestRF_nEstimators)
-                .setMaxDepth(bestRF_maxDepth)
-                .setMinSamplesSplit(bestRF_minSamplesSplit)
-                .build();
-            finalRf->fit(X, y);
-            bestModel = std::move(finalRf);
-        }
+		if (foundAny) {
+			auto finalRf = RandomForestBuilder().setEstimators(bestRF_nEstimators).setMaxDepth(bestRF_maxDepth)
+				.setMinSamplesSplit(bestRF_minSamplesSplit)
+                		.build();
+
+            		finalRf->fit(X, y);
+            		bestModel = std::move(finalRf);
+        	}
 
 	} else if (modelType == "XGBoost") {
 		//   hyperParams[0] -> candidates for nEstimators (int)
@@ -308,7 +304,7 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
 
             // K-Fold Loop
             for (int k = 0; k < kFolds; ++k) {
-                std::vector<std::vector<double>> trainX, valX;
+		std::vector<std::vector<double>> trainX, valX;
                 std::vector<double> trainY, valY;
 
                 trainX.reserve(X.size()); 
@@ -321,20 +317,16 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
                 size_t end = (k == kFolds - 1) ? X.size() : start + foldSize;
 
                 for (size_t i = 0; i < X.size(); ++i) {
-                    if (i >= start && i < end) {
-                        valX.push_back(X[indices[i]]);
-                        valY.push_back(y[indices[i]]);
-                    } else {
-                        trainX.push_back(X[indices[i]]);
-                        trainY.push_back(y[indices[i]]);
-                    }
+			if (i >= start && i < end) {
+                        	valX.push_back(X[indices[i]]);
+                        	valY.push_back(y[indices[i]]);
+                    	} else {
+                        	trainX.push_back(X[indices[i]]);
+                        	trainY.push_back(y[indices[i]]);
+                    	}
                 }
 
-                auto xgb = XGBoostBuilder()
-                    .setNEstimators(nEstimators)
-                    .setLearningRate(learningRate)
-                    .setMaxDepth(maxDepth)
-                    .setSubsampleRatio(subsampleRatio)
+                auto xgb = XGBoostBuilder().setNEstimators(nEstimators).setLearningRate(learningRate).setMaxDepth(maxDepth).setSubsampleRatio(subsampleRatio)
                     .setGamma(gamma)
                     .setRegularization(regularization)
                     .build();
@@ -348,33 +340,31 @@ std::unique_ptr<IModel> ClassicModelFactory::randomSearch(
                 totalScore += evaluationStrategy.evaluate(*xgb, valXData, valYData);
             }
 
-            double avgScore = totalScore / kFolds;
+            	double avgScore = totalScore / kFolds;
 
-			if (avgScore < bestScore) {
-				bestScore = avgScore;
-                bestXGB_nEstimators = nEstimators;
-                bestXGB_learningRate = learningRate;
-                bestXGB_maxDepth = maxDepth;
-                bestXGB_subsampleRatio = subsampleRatio;
-                bestXGB_gamma = gamma;
-                bestXGB_regularization = regularization;
-                foundAny = true;
-			}
+		if (avgScore < bestScore) {
+			bestScore = avgScore;
+                	bestXGB_nEstimators = nEstimators;
+                	bestXGB_learningRate = learningRate;
+                	bestXGB_maxDepth = maxDepth;
+                	bestXGB_subsampleRatio = subsampleRatio;
+                	bestXGB_gamma = gamma;
+                	bestXGB_regularization = regularization;
+                	foundAny = true;
 		}
+	}
 
-        // Rebuild best model on full dataset
-        if (foundAny) {
-            auto finalXgb = XGBoostBuilder()
-                .setNEstimators(bestXGB_nEstimators)
-                .setLearningRate(bestXGB_learningRate)
-                .setMaxDepth(bestXGB_maxDepth)
-                .setSubsampleRatio(bestXGB_subsampleRatio)
-                .setGamma(bestXGB_gamma)
-                .setRegularization(bestXGB_regularization)
-                .build();
-            finalXgb->fit(X, y);
-            bestModel = std::move(finalXgb);
-        }
+        	// Rebuild best model on full dataset
+        	if (foundAny) {
+			auto finalXgb = XGBoostBuilder().setNEstimators(bestXGB_nEstimators).setLearningRate(bestXGB_learningRate).setMaxDepth(bestXGB_maxDepth)
+                	.setSubsampleRatio(bestXGB_subsampleRatio)
+                	.setGamma(bestXGB_gamma)
+                	.setRegularization(bestXGB_regularization)
+                	.build();
+
+            		finalXgb->fit(X, y);
+            		bestModel = std::move(finalXgb);
+        	}
 	}
 
 	return bestModel;

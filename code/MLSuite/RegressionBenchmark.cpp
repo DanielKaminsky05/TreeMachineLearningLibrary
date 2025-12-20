@@ -34,7 +34,7 @@ double calculateR2(const std::vector<float>& actual, const std::vector<float>& p
     }
 
     if (ss_total == 0.0) {
-        return (ss_res == 0.0) ? 1.0 : 0.0;
+	return (ss_res == 0.0) ? 1.0 : 0.0;
     }
 
     return 1.0 - (ss_res / ss_total);

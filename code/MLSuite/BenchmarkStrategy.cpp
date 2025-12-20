@@ -9,18 +9,16 @@
 #endif
 
 // train and print time taken to train the model instead of using a timeFit function to benchmark time in main.cpp. 
-BenchmarkResult BenchmarkStrategy::trainAndExecute(IModel& model,
-                                                   const Dataset& trainFeatures,
-                                                   const Dataset& trainTargets,
-                                                   const Dataset& testFeatures,
-                                                   const Dataset& testTargets) const {
-    std::cout << "\n--- Benchmarking " << model.getName() << " ---" << std::endl;
-    const auto start = std::chrono::high_resolution_clock::now();
-    model.fit(trainFeatures.get_data(), trainFeatures.get_columns(), trainTargets.get_data());
-    const auto end = std::chrono::high_resolution_clock::now();
+BenchmarkResult BenchmarkStrategy::trainAndExecute(IModel& model, const Dataset& trainFeatures, const Dataset& trainTargets, const Dataset& testFeatures, 
+						   const Dataset& testTargets) const {
+
+	std::cout << "\n--- Benchmarking " << model.getName() << " ---" << std::endl;
+    	const auto start = std::chrono::high_resolution_clock::now();
+    	model.fit(trainFeatures.get_data(), trainFeatures.get_columns(), trainTargets.get_data());
+    	const auto end = std::chrono::high_resolution_clock::now();
     
-    double fitMillis = millisBetween(start, end);
-    return execute(model, testFeatures, testTargets, fitMillis);
+    	double fitMillis = millisBetween(start, end);
+    	return execute(model, testFeatures, testTargets, fitMillis);
 }
 
 double currentMemoryUsageBytes() {
@@ -37,7 +35,6 @@ double currentMemoryUsageBytes() {
 }
 
 // return the time spent training 
-double millisBetween(const std::chrono::high_resolution_clock::time_point& start,
-                     const std::chrono::high_resolution_clock::time_point& end) {
-    return std::chrono::duration<double, std::milli>(end - start).count();
+double millisBetween(const std::chrono::high_resolution_clock::time_point& start, const std::chrono::high_resolution_clock::time_point& end) {
+	return std::chrono::duration<double, std::milli>(end - start).count();
 }

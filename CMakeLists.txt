@@ -49,12 +49,12 @@ add_executable(ui-demo
 
 find_package(Qt6 COMPONENTS Widgets QUIET)
 if (Qt6_FOUND)
-    target_link_libraries(assignment2 PRIVATE Qt6::Widgets)
+    target_link_libraries(ui-demo PRIVATE Qt6::Widgets)
 else()
     find_package(Qt5 COMPONENTS Widgets REQUIRED)
-    target_link_libraries(assignment2 PRIVATE Qt5::Widgets)
+    target_link_libraries(ui-demo PRIVATE Qt5::Widgets)
 endif()
 
 if (WIN32)
-    target_link_libraries(assignment2 PRIVATE Psapi)
+    target_link_libraries(ui-demo PRIVATE Psapi)
 endif()

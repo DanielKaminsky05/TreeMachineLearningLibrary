@@ -11,25 +11,24 @@
 
 class LogRegModel : public IModel {
 public:
-    LogRegModel();
+	LogRegModel();
 
-    void fit(const std::vector<float>& x_values, const std::vector<std::string>& columns, const std::vector<float>& y_values_vec,
-             const std::string& regularization = "None", double lambda = 0.0,
-             double learning_rate = 0.01, int num_iterations = 1000);
+    	void fit(const std::vector<float>& x_values, const std::vector<std::string>& columns, const std::vector<float>& y_values_vec, 
+	      const std::string& regularization = "None", double lambda = 0.0, double learning_rate = 0.01, int num_iterations = 1000);
 
-    Eigen::VectorXf predict_proba(const Eigen::Ref<const Eigen::MatrixXf>& X_test) const;
+    	Eigen::VectorXf predict_proba(const Eigen::Ref<const Eigen::MatrixXf>& X_test) const;
 
-    Eigen::VectorXf predict(const Eigen::Ref<const Eigen::MatrixXf>& X_test) const;
+    	Eigen::VectorXf predict(const Eigen::Ref<const Eigen::MatrixXf>& X_test) const;
 
-    Eigen::VectorXf get_theta() const;
+    	Eigen::VectorXf get_theta() const;
 
-    void fit(const std::vector<float>& x_values, const std::vector<std::string>& columns, const std::vector<float>& y_values) override;
-    std::vector<float> predict(const std::vector<float>& x_values, const std::vector<std::string>& columns) const override;
-    std::string getName() const override;
+    	void fit(const std::vector<float>& x_values, const std::vector<std::string>& columns, const std::vector<float>& y_values) override;
+    	std::vector<float> predict(const std::vector<float>& x_values, const std::vector<std::string>& columns) const override;
+    	std::string getName() const override;
 
 private:
-    Eigen::VectorXf m_theta;
-    float sigmoid(float z) const;
+    	Eigen::VectorXf m_theta;
+    	float sigmoid(float z) const;
 };
 
 #endif // LOGREG_MODEL_H

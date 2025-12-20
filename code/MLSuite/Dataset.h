@@ -9,14 +9,11 @@
 
 class Dataset {
 private:
-	// For file-based data
+
 	std::string file_path;
 	std::string type;
 	std::vector<float> data;
 	std::vector<std::string> columns;
-
-
-
 
 public: 
 	// constructor for loading dataset from a file 

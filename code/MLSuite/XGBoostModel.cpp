@@ -7,7 +7,7 @@
 #include <stdexcept>
 
 namespace {
-    // Sigmoid function for binary classification
+    // sigmoid function for binary classification
     inline double sigmoid(double x) {
         return 1.0 / (1.0 + std::exp(-x));
     }
@@ -59,13 +59,12 @@ void XGBoostModel::fit(const std::vector<std::vector<double>>& X, const std::vec
     	trees.reserve(static_cast<size_t>(nEstimators));
 
         if (isClassification) {
-            // For binary classification, initial prediction (logits) is usually 0.0 (prob = 0.5)
-            // or log(mean / (1 - mean)). Let's use 0.0 for simplicity or log-odds of mean.
+            // using 0.0 for simplicity or log-odds of mean.
             double posCount = 0.0;
             for(double y : Y) if(y > 0.5) posCount++;
             double prob = posCount / sampleCount;
             
-            // Avoid log(0)
+            // prevent log(0)
             prob = std::max(1e-6, std::min(1.0 - 1e-6, prob));
             initialBias = std::log(prob / (1.0 - prob));
         } else {
@@ -81,13 +80,10 @@ void XGBoostModel::fit(const std::vector<std::vector<double>>& X, const std::vec
     	for (int treeIndex = 0; treeIndex < nEstimators; ++treeIndex) {
         	for (size_t i = 0; i < sampleCount; ++i) {
                 if (isClassification) {
-                    // For Log Loss: Gradient = y - sigmoid(pred)
-                    // We fit the tree to these gradients. 
-                    double prob = sigmoid(predictions[i]);
+                    double prob = sigmoid(predictions[i]); // fit the tree to the gradients using log loss 
                     residuals[i] = Y[i] - prob; 
                 } else {
-                    // For MSE: Gradient = y - pred
-            		residuals[i] = Y[i] - predictions[i];
+            		residuals[i] = Y[i] - predictions[i]; // MSE: gradient = y - pred
                 }
         	}
 
@@ -109,7 +105,6 @@ void XGBoostModel::fit(const std::vector<std::vector<double>>& X, const std::vec
             		residualSubset.push_back(residuals[rowIndex]);
         	}
 
-        	// Note: We always use Regression Trees (isClassification=false) to fit residuals/gradients
             DecisionTree tree(maxDepth, 2, false); 
         	tree.fit(featureSubset, residualSubset);
         	trees.push_back(std::move(tree));
@@ -133,10 +128,7 @@ double XGBoostModel::predict(const std::vector<double>& input) const {
         	score += static_cast<double>(learningRate) * tree.predict(input);
     	}
 
-        if (isClassification) {
-            // Return probability or class? 
-            // Usually predict() returns class labels for consistency with IModel interface 
-            // if we follow the pattern in RandomForest.
+        if (isClassification) { // return binary 1 or 0 depending on probability 
             double prob = sigmoid(score);
             return (prob >= 0.5) ? 1.0 : 0.0;
         }
@@ -174,9 +166,7 @@ void XGBoostModel::fit(const std::vector<float>& x_values, const std::vector<std
              return;
         }
 
-        // Handle possible one-hot encoding or mismatch
-        // Similar logic to RandomForest if needed, but for now strict check:
-    	if (rowCount != y_values.size()) {
+    	if (rowCount != y_values.size()) { // check for encoding mismatch 
         	throw std::invalid_argument("Feature rows must match target size (XGBoost only supports single-output regression/binary classification).");
     	}
 }

@@ -6,7 +6,6 @@
 #include "IModel.h"
 #include "BenchmarkStrategy.h"
 #include <memory>
-#include <string>
 
 class ClassicModelFactory : public HyperparameterSearch {
 public:
@@ -44,7 +43,8 @@ public:
         const std::vector<std::vector<std::string>>& hyperParams,
         const std::vector<std::vector<double>>& X,
         const std::vector<double>& y,
-        const BenchmarkStrategy& evaluationStrategy) override;
+        const BenchmarkStrategy& evaluationStrategy,
+        const LogFn& log) override;
 
 	std::unique_ptr<IModel> createLinRegModel(); // linreg 
 	std::unique_ptr<IModel> createLogRegModel();

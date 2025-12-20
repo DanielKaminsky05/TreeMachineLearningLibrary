@@ -5,22 +5,18 @@
 #include "Dataset.h"
 #include <string>
 #include <stdexcept>
-#include <memory> // For std::unique_ptr
+#include <memory> // unique_ptr for returning ptr to the model 
 
 class LinearRegressionBuilder {
 public:
-	// Constructor
     	LinearRegressionBuilder();
 
-    	// "Setter" methods, returns a reference for chaining
     	LinearRegressionBuilder& with_training_data(Dataset& X_train, Dataset& y_train);
     	LinearRegressionBuilder& with_regularization(const std::string& type);
     	LinearRegressionBuilder& with_lambda(double lambda);
 
-    	// The original build/fit method that returns the trained model
     	LinRegModel fit();
 
-    	// New method to build an unfitted model
     	std::unique_ptr<LinRegModel> build_unfitted();
 
 private:

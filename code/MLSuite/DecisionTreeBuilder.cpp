@@ -1,5 +1,5 @@
 #include "DecisionTreeBuilder.h"
-#include <stdexcept> // For std::invalid_argument
+#include <stdexcept> // error handling 
 
 DecisionTreeBuilder::DecisionTreeBuilder() 
     : mMaxDepth(10), mMinSamplesSplit(2), mIsClassification(false) {}

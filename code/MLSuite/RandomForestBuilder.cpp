@@ -7,7 +7,7 @@ RandomForestBuilder::RandomForestBuilder()
       mMaxFeatures(0),
       mBootstrap(true),
       mRandomState(0),
-      mIsClassification(false) {} // random forest builder constructor 
+      mIsClassification(false) {} 
 
 RandomForestBuilder& RandomForestBuilder::setEstimators(int estimators) {
 	nEstimators = estimators;

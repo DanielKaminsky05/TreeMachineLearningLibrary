@@ -46,11 +46,11 @@ Dataset::Dataset(const std::vector<std::vector<float>>& features, const std::vec
     columns.clear();
 
     if (!features.empty()) {
-        // Assume this is a feature dataset
+        // assume this is a feature dataset
         size_t n_rows = features.size();
         size_t n_cols = features[0].size();
 
-        // Generate dummy column names
+        // generate dummy column names
         for (size_t j = 0; j < n_cols; ++j) {
             columns.push_back(to_string(j));
         }
@@ -64,7 +64,6 @@ Dataset::Dataset(const std::vector<std::vector<float>>& features, const std::vec
             data.insert(data.end(), row.begin(), row.end());
         }
     } else if (!targets.empty()) {
-        // Assume this is a target dataset
         columns.push_back("target");
         data = targets;
     }
@@ -78,7 +77,7 @@ void Dataset::read_csv(string path) {
         	throw std::runtime_error("Error: file not found at " + path);
     	}
 
-    	// Clear existing data
+    	// clear existing data
     	columns.clear();
     	data.clear();
 
@@ -125,6 +124,7 @@ const vector<string>& Dataset::get_columns() const {
 	return columns;
 }
 
+// helper conversion functions 
 std::vector<std::vector<double>> Dataset::get_data_as_double_2d() const {
     size_t n_cols = columns.size();
     if (n_cols == 0) return {};
@@ -147,8 +147,8 @@ std::vector<double> Dataset::get_data_as_double_1d() const {
     return out;
 }
 
-
-void Dataset::set_data(vector<float> new_data, vector<string> new_cols) { // getter method for the data 
+// setters for Dataset class, used in classic model factory
+void Dataset::set_data(vector<float> new_data, vector<string> new_cols) { 
 	data = new_data;
 	columns = new_cols;
 }

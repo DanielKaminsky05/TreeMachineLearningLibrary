@@ -1,21 +1,92 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/8Cy36LS2)
-[![Work in MakeCode](https://classroom.github.com/assets/work-in-make-code-8824cc13a1a3f34ffcd245c82f0ae96fdae6b7d554b6539aec3a03a70825519c.svg)](https://classroom.github.com/online_ide?assignment_repo_id=21105021&assignment_repo_type=AssignmentRepo)
+# 3307 Final OOP Deliverable
 
-# Assignment 2 Deliverable
+This README details the final submission for our course project for OOP design patterns, where we implemented traditional machine learning libraries in C++ from scratch with our custom Dataset implementation. Users can load CSV data, train the model, and benchmark the results and performance of the model using our abstracted library.
 
-For our deliverable 2, we have implemented a Machine Learning library with a user friendly abstraction, built with the Factory, Builder and Strategy design patterns for algorithms such as Linear Regression, Decision Tree, Random Forest and XGBoost.
+For more implementation details, please refer to the [report README](report/README.md).
+
+# Repo structure 
+
+```
+.
+├── 3rdparty
+│   ├── eigen-5.0.0
+│   └── eigen-5.0.0.zip
+├── code 
+│   ├── app
+│   │   ├── DemoRunner.cpp
+│   │   └── DemoRunner.h 
+│   ├── MLSuite 
+│   │   ├── .gitignore 
+│   │   ├── BenchmarkStrategy.cpp
+│   │   ├── BenchmarkStrategy.h
+│   │   ├── ClassicModelFactory.cpp
+│   │   ├── ClassicModelFactory.h 
+│   │   ├── ClassificationBenchmark.cpp
+│   │   ├── ClassificationBenchmark.h
+│   │   ├── Dataset.cpp
+│   │   ├── Dataset.h
+│   │   ├── DecisionTree.cpp
+│   │   ├── DecisionTree.h
+│   │   ├── DecisionTreeBuilder.cpp
+│   │   ├── DecisionTreeBuilder.h
+│   │   ├── HyperparameterSearch.cpp
+│   │   ├── HyperparameterSearch.h
+│   │   ├── IModel.h
+│   │   ├── LinearRegressionBuilder.cpp
+│   │   ├── LinearRegressionBuilder.h
+│   │   ├── LinRegModel.cpp
+│   │   ├── LinRegModel.h 
+│   │   ├── LogisticRegressionBuilder.cpp
+│   │   ├── LogisticRegressionBuilder.h
+│   │   ├── LogRegModel.cpp
+│   │   ├── LogRegModel.h
+│   │   ├── main.cpp
+│   │   ├── ProjectTemplate.pro
+│   │   ├── RandomForest.cpp
+│   │   ├── RandomForest.h
+│   │   ├── RandomForestBuilder.cpp
+│   │   ├── RandomForestBuilder.h
+│   │   ├── RegressionBenchmark.cpp
+│   │   ├── RegressionBenchmark.h
+│   │   ├── XGBoostBuilder.cpp
+│   │   ├── XGBoostBuilder.h
+│   │   ├── XGBoostModel.cpp
+│   │   └── XGBoostModel.h
+│   └── ui 
+│       ├── MainWindow.cpp
+│       └── MainWindow.h 
+├── data-preprocessing
+│   ├── data-files
+│   ├── preprocessing-code
+│   ├── source-files
+│   └── README.md
+├── report
+│   ├── 3307 Deliverable #2 - Henrique & Daniel.pdf 
+│   ├── 3307 Deliverable #2 - Thomson Lam.pdf
+│   ├── 3307 Deliverable #3 - Henrique & Daniel.pdf 
+│   └── 3307 Deliverable #3 - Thomson Lam.pdf
+│   └── README.md
+├── tests
+│   ├── CMakeLists.txt
+│   ├── main.cpp
+│   ├── MockModel.h
+│   ├── TestBuilders.cpp
+│   ├── TestClassicModelFactory.cpp
+│   ├── TestDecisionTree.cpp
+│   ├── TestLinRegModel.cpp
+│   ├── TestLogisticRegression.cpp
+│   ├── TestRandomForest.cpp
+│   ├── TestRegressionBenchmark.cpp
+│   └── TestXGBoostModel.cpp
+├── .gitignore
+├── CMakeLists.txt
+├── demo.cpp
+├── main.cpp
+└── README.md 
+```
 
 ## Class definition and API usage
 
-For project folder structure, class definitions and API usage, please refer to `report/README.md`. For more details related to data preprocessing such as source files and source code used to preprocess data, please refer to `data-preprocessing/README.md`
+Please refer to the [report README](report/README.md) and the [data README](data-preprocessing/README.md) for more details about the data, class definitions, and running the code.
 
-> NOTE: since we are working in a group of 3, we have submitted 2 reports and 1 code repository, since we worked on the same repo for Deliverable 2, as a report by Thomson Lam and a report by Daniel and Henrique.
-
-# Running the code 
-
-Using the terminal: 
-
-```
-cd build && make && ./assignment2
-```
-
+We used generative AI tools such as Gemini and ChatGPT to brainstorm, give feedback and validate our use of design patterns for our project code. 

@@ -13,7 +13,7 @@ public:
     RandomForestBuilder& setMaxFeatures(int maxFeatures);
     RandomForestBuilder& setBootstrap(bool bootstrap);
     RandomForestBuilder& setRandomState(int randomState);
-    RandomForestBuilder& setIsClassification(bool isClassification); // New setter
+    RandomForestBuilder& setIsClassification(bool isClassification); 
 
     std::unique_ptr<RandomForest> build();
 
@@ -24,6 +24,6 @@ private:
     int mMaxFeatures;
     bool mBootstrap;
     int mRandomState;
-    bool mIsClassification; // New member
+    bool mIsClassification; 
 };
 #endif // RANDOMFORESTBUILDER_H

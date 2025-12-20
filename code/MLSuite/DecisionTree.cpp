@@ -12,7 +12,7 @@ DecisionTree::DecisionTree(int maxDepth, int minSampleSplit, bool isClassificati
     	nFeatures(0),
     	isFitted(false) {}
 
-// Utility: create a new empty node and return its index
+// create a new empty node and return its index
 int DecisionTree::newNode() {
 	int id = static_cast<int>(feature.size());
     	feature.push_back(-1);
@@ -65,11 +65,11 @@ double DecisionTree::impurityDecrease(int nP, double sumP, double sumP2,
     	double parentImp = computeMSE(nP, sumP, sumP2);
     	double leftImp   = computeMSE(nL, sumL, sumL2);
     	double rightImp  = computeMSE(nR, sumR, sumR2);
-    	// Weighted decrease
-    	return parentImp - ( (static_cast<double>(nL) * leftImp + static_cast<double>(nR) * rightImp) / static_cast<double>(nP) );
+    	return parentImp - ( (static_cast<double>(nL) * leftImp + static_cast<double>(nR) * rightImp) / static_cast<double>(nP) ); // weighted decrease is needed
     }
 }
 
+// CART partition 
 std::tuple<std::vector<int>, std::vector<int>>
 DecisionTree::partitionByThreshold(const std::vector<std::vector<double>>& X,
                                    int feat, double thr,
@@ -86,6 +86,7 @@ DecisionTree::partitionByThreshold(const std::vector<std::vector<double>>& X,
     return {L, R};
 }
 
+// leaf node definition
 void DecisionTree::makeLeaf(int nodeIndex,
                             const std::vector<int>& indices,
                             const std::vector<double>& Y) {
@@ -123,18 +124,19 @@ void DecisionTree::makeLeaf(int nodeIndex,
     	right[nodeIndex] = -1;
 }
 
+// return a decision tree with the best split params 
+// Return: (bestFeat, bestThr, bestGain, bestLeftIdx, bestRightIdx)
 std::tuple<int, double, double, std::vector<int>, std::vector<int>>
 DecisionTree::bestSplit(const std::vector<std::vector<double>>& X,
                         const std::vector<double>& Y,
                         const std::vector<int>& indices) {
 
-	// Return: (bestFeat, bestThr, bestGain, bestLeftIdx, bestRightIdx)
     	int n = static_cast<int>(indices.size());
     	if (n < minSampleSplit || n == 0) {
         	return {-1, 0.0, 0.0, {}, {}};
     	}
 
-    	// Precompute parent values
+    	// parent values
     	double sumP = 0.0, sumP2 = 0.0;
         if (!isClassification) {
     	    for (int i : indices) {
@@ -150,7 +152,7 @@ DecisionTree::bestSplit(const std::vector<std::vector<double>>& X,
     	std::vector<int> bestL, bestR;
 
     	for (int f = 0; f < nFeatures; ++f) {
-        	// Gather (x_f, y, idx) for this subset and sort by feature value
+        	// get (x_f, y, idx) for this subset and sort by feature value
         	std::vector<std::tuple<double,double,int>> rows;
         	rows.reserve(n);
         	for (int i : indices) {
@@ -161,11 +163,11 @@ DecisionTree::bestSplit(const std::vector<std::vector<double>>& X,
                       return std::get<0>(a) < std::get<0>(b);
                   });
 
-        	// Prefix values for left, suffix via totals for right
+        	// prefix values for left, suffix via totals for right
         	double sumL = 0.0, sumL2 = 0.0;
         	int nL = 0;
 
-        	// Sweep possible split points between distinct adjacent feature values
+        	// sweep all possible split points between distinct adjacent feature values
         	for (int s = 0; s < n - 1; ++s) {
             		double x_s, y_s; int idx_s;
             		std::tie(x_s, y_s, idx_s) = rows[s];
@@ -175,7 +177,7 @@ DecisionTree::bestSplit(const std::vector<std::vector<double>>& X,
 
             		double x_next = std::get<0>(rows[s+1]);
             		if (x_s == x_next) {
-                	// No threshold between equal values—skip
+                	// there will be no threshold between equal values—skip
                 	continue;
             	}
 
@@ -185,12 +187,11 @@ DecisionTree::bestSplit(const std::vector<std::vector<double>>& X,
             	double sumR  = sumP - sumL;
             	double sumR2 = sumP2 - sumL2;
 
-            	// Threshold midway between x_s and x_next
+            	// the threshold is midway between x_s and x_next
             	double thr = 0.5 * (x_s + x_next);
 
-                // Materialize index partitions for impurityDecrease if needed
-                // For performance, we could optimize this, but for now let's be correct.
-                std::vector<int> L; L.reserve(nL);
+                // materialize index partitions for impurityDecrease if needed
+                std::vector<int> L; L.reserve(nL); // NOTE: there is a better way of doing this, but simplicity is best for now
                 std::vector<int> R; R.reserve(nR);
                 for (int k = 0; k <= s; ++k) L.push_back(std::get<2>(rows[k]));
                 for (int k = s+1; k < n; ++k) R.push_back(std::get<2>(rows[k]));
@@ -219,7 +220,7 @@ void DecisionTree::buildTree(const std::vector<std::vector<double>>& X,
                              const std::vector<int>& indices,
                              int depth,
                              int nodeIndex) {
-	// Stopping criteria
+	// stopping criteria
     	if (depth >= maxDepth || static_cast<int>(indices.size()) < minSampleSplit) {
         	makeLeaf(nodeIndex, indices, Y);
         	return;
@@ -232,7 +233,7 @@ void DecisionTree::buildTree(const std::vector<std::vector<double>>& X,
         	return;
     	}
 
-    	// Create children
+    	// children
     	int lch = newNode();
     	int rch = newNode();
 
@@ -241,9 +242,9 @@ void DecisionTree::buildTree(const std::vector<std::vector<double>>& X,
     	left[nodeIndex] = lch;
     	right[nodeIndex] = rch;
     	isLeaf[nodeIndex] = false;
-    	value[nodeIndex] = 0.0; // unused for internal nodes
+    	value[nodeIndex] = 0.0; // not needed for internal nodes
 
-    	// Recurse
+    	// recursive call  
     	buildTree(X, Y, Lidx, depth + 1, lch);
     	buildTree(X, Y, Ridx, depth + 1, rch);
 }
